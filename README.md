@@ -16,7 +16,7 @@ Claude Code 에서:
 /daily auto           # 자동: 검증 통과 시 main 에 커밋·푸시
 ```
 
-평일 07:00 KST 에 Claude Code 클라우드 루틴이 `/daily auto` 를 실행한다. 푸시에 성공하고 신규·갱신 공고가 있으면 루틴이 Gmail 커넥터로 jihye.min@lspace.kr 에 결과 메일을 보낸다(지시문은 루틴 프롬프트에 있음).
+매일(주말 포함) 07:00 KST 에 Claude Code 클라우드 루틴이 `/daily auto` 를 실행한다. 푸시에 성공하고 신규·갱신 공고가 있으면 루틴이 Gmail 커넥터로 jihye.min@lspace.kr 에 결과 메일을 보낸다(지시문은 루틴 프롬프트에 있음).
 실행 기록은 https://claude.ai/code/routines/trig_01PenAmanYVVCqsDMcR94qdu , 또는 Claude Code 의 `/schedule` 로 확인·수정한다.
 
 도구만 따로 쓰기:

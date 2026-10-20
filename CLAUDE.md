@@ -4,7 +4,7 @@ SI 회사 L.SPACE 가 수주·과제 기회를 놓치지 않도록 **국가R&D �
 프로그램 개발·AI·IT 관련 공고만 매일 모아 사업명·내용·규모·신청기한·핵심 조건을 정리하는 정적 사이트(GitHub Pages).
 빌드 도구 없음. HTML/CSS/JS 와 JSON 데이터를 그대로 배포한다. 운영 방식은 L.SPACE Tech Radar(`lspace-next/WeeklyNews`)를 따른다.
 
-- **업데이트**: `/daily` (`.claude/commands/daily.md`). 평일 07:00 KST 클라우드 루틴이 `/daily auto` 를 실행해 `main` 에 푸시한다.
+- **업데이트**: `/daily` (`.claude/commands/daily.md`). 매일(주말 포함) 07:00 KST 클라우드 루틴이 `/daily auto` 를 실행해 `main` 에 푸시한다.
   `tools/check_notices.py` 를 통과하지 못하면 푸시하지 않는다. 푸시에 성공하고 신규·갱신이 있으면 루틴이 Gmail 커넥터로 jihye.min@lspace.kr 에 결과 메일을 보낸다(지시문은 루틴 프롬프트).
 - **나라장터(g2b)**: 보류 중. collect.py 의 g2b ERROR(DATA_GO_KR_KEY 없음)는 정상이다.
 - **SITE_URL**: `https://lspace-next.github.io/BizRadar`
