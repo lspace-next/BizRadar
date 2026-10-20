@@ -142,6 +142,7 @@ _config.yml             Pages 배포 제외 목록 (CLAUDE.md·README·tools·.c
 | Refactor | 동작 변화 없는 코드 정리 |
 | Chore | 설정·배포·도구 (`tools/`, `_config.yml`) |
 
+- 글자 크기: `style.css` 의 `--fs-xs`(12)·`--fs-sm`(14)·`--fs-base`(16)·`--fs-md`(19)·`--fs-lg`(26)·`--fs-xl`(30) 6단계만 쓴다. px 값을 직접 쓰지 않는다. 모바일은 md·lg·xl 토큰만 줄인다.
 - CSS/JS 캐시: index.html 이 `style.css?v=YYYYMMDD`·`main.js?v=YYYYMMDD` 로 불러온다. 고치면 `?v=` 를 새 날짜로 올린다(같은 날 두 번째면 `YYYYMMDD02`). 데이터(JSON)는 main.js 가 10분 단위 쿼리로 캐시를 우회한다.
 - 링크 공유 미리보기: `og:image` = `assets/images/og-cover.png?v=YYYYMMDD`(1200×630). 원본은 `tools/og-cover.html` — 로컬 서버로 열어 1200×630 으로 캡처한다. 문구·디자인을 바꾸면 이미지를 다시 만들고 `?v=` 를 새 날짜로 올린다(카카오톡은 https://developers.kakao.com/tool/clear/og 에서 캐시 초기화).
 - 방문자 집계: GoatCounter(https://lspace-next.goatcounter.com, Tech Radar 와 같은 계정 — 경로 `/BizRadar/` 로 구분).
