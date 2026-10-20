@@ -16,7 +16,8 @@ Claude Code 에서:
 /daily auto           # 자동: 검증 통과 시 main 에 커밋·푸시
 ```
 
-평일 07:00 KST 에 Claude Code 클라우드 루틴이 `/daily auto` 를 실행한다. 실행 기록은 claude.ai 의 루틴 화면, 또는 Claude Code 의 `/schedule` 로 확인·수정한다.
+평일 07:00 KST 에 Claude Code 클라우드 루틴이 `/daily auto` 를 실행한다. 푸시에 성공하고 신규·갱신 공고가 있으면 루틴이 Gmail 커넥터로 jihye.min@lspace.kr 에 결과 메일을 보낸다(지시문은 루틴 프롬프트에 있음).
+실행 기록은 https://claude.ai/code/routines/trig_01PenAmanYVVCqsDMcR94qdu , 또는 Claude Code 의 `/schedule` 로 확인·수정한다.
 
 도구만 따로 쓰기:
 
@@ -27,7 +28,7 @@ python tools/extract_text.py "<첨부 URL>"      # 공고문(hwp·hwpx·pdf·zip
 python tools/check_notices.py                 # 발행 전 검증
 ```
 
-나라장터 입찰 수집에는 공공데이터포털의 `조달청_나라장터 입찰공고정보서비스` 활용신청 후 받은 인증키를 환경 변수 `DATA_GO_KR_KEY` 로 넣어야 한다.
+나라장터 입찰 수집은 **보류 중**이다. 다시 켜려면 공공데이터포털의 `조달청_나라장터 입찰공고정보서비스` 인증키를 루틴 환경 변수 `DATA_GO_KR_KEY` 로 넣고, 루틴 프롬프트의 '나라장터 보류' 문장을 지운다.
 
 규칙은 [CLAUDE.md](CLAUDE.md), 소스는 [.claude/sources.md](.claude/sources.md), 절차는 [.claude/commands/daily.md](.claude/commands/daily.md).
 
