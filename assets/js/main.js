@@ -289,7 +289,7 @@
     newDate = (meta.last_run || "").slice(0, 10) || notices.reduce((a, n) => (n.added > a ? n.added : a), "");
     refreshStates();
     if (meta.last_run) {
-      $("#updated").textContent = `${md(meta.last_run)} ${meta.last_run.slice(11, 16)} 업데이트`;
+      $("#updated").innerHTML = `${md(meta.last_run)} ${meta.last_run.slice(11, 16)}<span class="upd-label"> 업데이트</span>`;
     }
   }
 

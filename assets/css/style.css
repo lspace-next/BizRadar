@@ -424,3 +424,6 @@ button, input, select { font: inherit; color: inherit; }
   .fit-row { grid-template-columns: 22px 1fr; row-gap: 2px; }
   .fit-row > span:last-child { grid-column: 1 / -1; } /* 근거는 제목 아래 줄, 아이콘 위치부터 */
 }
+@media (max-width: 360px) {
+  .upd-label { display: none; }
+}
