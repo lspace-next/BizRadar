@@ -328,7 +328,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---------- expanded body ---------- */
 
-.notice-body { display: none; padding: 4px 20px 20px; }
+.notice-body { display: none; padding: 4px 20px 20px; overflow-wrap: anywhere; }
 .notice.is-open .notice-body { display: block; }
 .notice-body h3 {
   display: flex;
@@ -347,6 +347,7 @@ button, input, select { font: inherit; color: inherit; }
 .notice-body ul.fit-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .fit-row { display: grid; grid-template-columns: 24px 84px 1fr; gap: 8px; align-items: baseline; font-size: var(--fs-base); color: var(--text-sub); }
 .fit-row b { font-weight: 700; color: var(--text); }
+.fit-row > span:last-child { min-width: 0; overflow-wrap: anywhere; } /* keep-all 이라도 띄어쓰기 없는 긴 단어는 틀 안에서 끊는다 */
 .fit-mark {
   display: inline-grid;
   place-items: center;
@@ -419,6 +420,7 @@ button, input, select { font: inherit; color: inherit; }
   .notice-head > .chevron { display: none; }
   .notice-body { padding: 4px 14px 16px; }
   .detail-grid { grid-template-columns: 1fr; gap: 14px; }
-  .fit-row { grid-template-columns: 22px 1fr; }
-  .fit-row > span:last-child { grid-column: 2; }
+  .fit-sec { padding: 12px; }
+  .fit-row { grid-template-columns: 22px 1fr; row-gap: 2px; }
+  .fit-row > span:last-child { grid-column: 1 / -1; } /* 근거는 제목 아래 줄, 아이콘 위치부터 */
 }
