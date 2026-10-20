@@ -6,6 +6,7 @@
   const TYPES = { rnd: "국가R&D", support: "지원사업", bid: "SW입찰" };
   const FIT = { high: "적합도 높음", mid: "적합도 보통" };
   const MARK = { ok: ["✓", "충족"], partial: ["△", "부분"], no: ["✗", "불충족"], check: ["?", "확인 필요"] };
+  const SHORT = { "분야": "분야", "주관 자격": "주관", "지역": "지역", "부담·조건": "부담" };
   const URGENT_DAYS = 7;
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -99,37 +100,59 @@
       if (bid.joint) facts.push(factRow("공동수급", bid.joint));
       if (bid.briefing) facts.push(factRow("설명회", bid.briefing));
     }
+    // 상단(항상 보임): 판단에 필요한 것 — 적합도 판정 막대 · 규모 · 마감 · 기회(why)
+    // 펼침: 근거 — 적합도 분석 → 공고 내용(요약·핵심 조건 | 개요)
     return `
 <article class="notice${s.key === "closed" ? " is-closed" : ""}" id="n-${esc(n.id)}" data-type="${esc(n.type)}">
   <button class="notice-head" type="button" aria-expanded="false">
     <span class="notice-meta">
       <span class="type-badge">${TYPES[n.type] || ""}</span>
       <span>${esc(n.agency)}</span>
-      <span class="badge-fit ${esc(n.fit)}">${FIT[n.fit] || ""}</span>
       ${isNew ? '<span class="badge-new">NEW</span>' : ""}${isUpd ? '<span class="badge-upd">업데이트</span>' : ""}
     </span>
     <h2 class="notice-title">${esc(n.title)}</h2>
-    <span class="notice-key">
-      <span>규모 <b>${n.budget ? esc(n.budget) : "공고문 확인"}</b></span>
-      ${n.conditions && n.conditions[0] ? `<span>${esc(n.conditions[0])}</span>` : ""}
+    <span class="verdict">
+      <span class="fit-pill ${esc(n.fit)}">${FIT[n.fit] || ""}</span>
+      ${renderScorebar(n)}
+      <span class="verdict-budget"><small>규모</small>${n.budget ? esc(n.budget) : "공고문 확인"}</span>
     </span>
     ${n.why ? `<span class="notice-why">${esc(n.why)}</span>` : ""}
     <span class="dday ${s.key}"><strong>${esc(s.label)}</strong><span>${esc(s.sub)}</span></span>
+    <span class="chevron" aria-hidden="true"></span>
   </button>
   <div class="notice-body">
-    <h3>요약</h3>
-    <p>${esc(n.summary)}</p>
     ${renderFit(n)}
-    ${n.conditions && n.conditions.length ? `<h3>핵심 조건</h3><ul>${n.conditions.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
-    <dl class="facts">${facts.join("")}</dl>
-    ${n.note ? `<p class="note">ⓘ ${esc(n.note)}</p>` : ""}
-    <div class="tags">${(n.tags || []).map((t) => `<span class="tag">#${esc(t)}</span>`).join("")}<span class="tag">출처 ${esc(n.source)}</span></div>
-    <div class="links">
-      <a class="btn primary" href="${esc(n.url)}" target="_blank" rel="noopener">원문 공고 ↗</a>
-      <button class="btn" type="button" data-copy="${esc(n.id)}">링크 복사</button>
+    <section class="detail-sec">
+      <h3>공고 내용</h3>
+      <div class="detail-grid">
+        <div>
+          <p class="summary">${esc(n.summary)}</p>
+          ${n.conditions && n.conditions.length ? `<h4>핵심 조건</h4><ul class="cond-list">${n.conditions.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+        </div>
+        <dl class="facts">${facts.join("")}</dl>
+      </div>
+      ${n.note ? `<p class="note">ⓘ ${esc(n.note)}</p>` : ""}
+    </section>
+    <div class="body-foot">
+      <div class="tags">${(n.tags || []).map((t) => `<span class="tag">#${esc(t)}</span>`).join("")}<span class="tag">출처 ${esc(n.source)}</span></div>
+      <div class="links">
+        <a class="btn primary" href="${esc(n.url)}" target="_blank" rel="noopener">원문 공고 ↗</a>
+        <button class="btn" type="button" data-copy="${esc(n.id)}">링크 복사</button>
+      </div>
     </div>
   </div>
 </article>`;
+  }
+
+  // 4칸 판정 막대: 칸 색 = 판정, 칸 글자 = 항목 약칭 + 기호
+  function renderScorebar(n) {
+    const fa = n.fit_analysis || [];
+    if (!fa.length) return "";
+    const cells = fa.map((a) => {
+      const m = MARK[a.result] || ["", ""];
+      return `<span class="score-cell ${esc(a.result)}" title="${esc(a.item)}: ${m[1]}"><i>${m[0]}</i>${esc(SHORT[a.item] || a.item)}</span>`;
+    });
+    return `<span class="scorebar" aria-label="적합도 판정">${cells.join("")}</span>`;
   }
 
   function renderFit(n) {
@@ -138,7 +161,7 @@
       return `<li class="fit-row ${esc(a.result)}"><span class="fit-mark" title="${m[1]}">${m[0]}</span><b>${esc(a.item)}</b><span>${esc(a.note)}</span></li>`;
     });
     if (!rows.length) return "";
-    return `<h3>적합도 분석 · ${FIT[n.fit] || ""}</h3><ul class="fit-list">${rows.join("")}</ul>`;
+    return `<section class="fit-sec"><h3>적합도 분석 <span class="fit-pill ${esc(n.fit)}">${FIT[n.fit] || ""}</span></h3><ul class="fit-list">${rows.join("")}</ul></section>`;
   }
 
   function renderStats() {
