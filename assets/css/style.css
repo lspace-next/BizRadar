@@ -264,9 +264,9 @@ button, input, select { font: inherit; color: inherit; }
 .verdict-budget small { font-size: 12px; font-weight: 500; color: var(--text-mute); margin-right: 6px; }
 
 /* 기회: why it matters */
-.notice-why {
+.notice-body .notice-why {
   display: block;
-  margin-top: 6px;
+  margin: 0 0 12px;
   padding: 9px 12px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--type) 8%, transparent);
@@ -290,7 +290,7 @@ button, input, select { font: inherit; color: inherit; }
 /* 마감: 오른쪽 열 */
 .notice-head > .dday {
   grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-row: 1 / span 2;
   align-self: start;
   text-align: right;
   min-width: 96px;
@@ -305,7 +305,7 @@ button, input, select { font: inherit; color: inherit; }
 
 .notice-head > .chevron {
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 3;
   justify-self: end;
   align-self: end;
   width: 9px;

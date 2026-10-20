@@ -100,8 +100,8 @@
       if (bid.joint) facts.push(factRow("공동수급", bid.joint));
       if (bid.briefing) facts.push(factRow("설명회", bid.briefing));
     }
-    // 상단(항상 보임): 판단에 필요한 것 — 적합도 판정 막대 · 규모 · 마감 · 기회(why)
-    // 펼침: 근거 — 적합도 분석 → 공고 내용(요약·핵심 조건 | 개요)
+    // 목록(항상 보임): 적합도 판정 막대 · 규모 · 마감
+    // 펼침: 기회(why) → 적합도 분석 → 공고 내용(요약·핵심 조건 | 개요)
     return `
 <article class="notice${s.key === "closed" ? " is-closed" : ""}" id="n-${esc(n.id)}" data-type="${esc(n.type)}">
   <button class="notice-head" type="button" aria-expanded="false">
@@ -116,11 +116,11 @@
       ${renderScorebar(n)}
       <span class="verdict-budget"><small>규모</small>${n.budget ? esc(n.budget) : "공고문 확인"}</span>
     </span>
-    ${n.why ? `<span class="notice-why">${esc(n.why)}</span>` : ""}
     <span class="dday ${s.key}"><strong>${esc(s.label)}</strong><span>${esc(s.sub)}</span></span>
     <span class="chevron" aria-hidden="true"></span>
   </button>
   <div class="notice-body">
+    ${n.why ? `<p class="notice-why">${esc(n.why)}</p>` : ""}
     ${renderFit(n)}
     <section class="detail-sec">
       <h3>공고 내용</h3>
