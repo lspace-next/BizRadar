@@ -410,8 +410,9 @@ button, input, select { font: inherit; color: inherit; }
   :root { --fs-md: 17px; --fs-lg: 22px; --fs-xl: 26px; }
   .toolbar { position: static; }
   .updated { font-size: var(--fs-xs); }
+  /* 모바일은 검색창만 — 상태·적합도·정렬 드롭다운과 분야 칩은 숨긴다(기본값: 접수중·예정, 마감 임박순) */
   .filters input[type="search"] { flex-basis: 100%; }
-  .filters select { flex: 1 1 0; min-width: 0; }
+  .filters select, .chips { display: none; }
   .notice { scroll-margin-top: 70px; }
   .notice-head { grid-template-columns: 1fr; padding: 14px; }
   .notice-head > .dday { grid-column: 1; grid-row: auto; order: -1; text-align: left; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0; }
