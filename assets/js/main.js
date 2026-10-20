@@ -59,7 +59,7 @@
     if (state.tag && !n.tags.includes(state.tag)) return false;
     if (state.fit && n.fit !== state.fit) return false;
     if (state.q) {
-      const hay = [n.title, n.agency, n.summary, n.budget, n.source, ...(n.conditions || []), ...(n.tags || [])].join(" ").toLowerCase();
+      const hay = [n.title, n.agency, n.summary, n.why, n.budget, n.source, ...(n.conditions || []), ...(n.tags || [])].join(" ").toLowerCase();
       if (!state.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
     }
     return true;
@@ -111,6 +111,7 @@
       <span>규모 <b>${n.budget ? esc(n.budget) : "공고문 확인"}</b></span>
       ${n.conditions && n.conditions[0] ? `<span>${esc(n.conditions[0])}</span>` : ""}
     </span>
+    ${n.why ? `<span class="notice-why">${esc(n.why)}</span>` : ""}
     <span class="dday ${s.key}"><strong>${esc(s.label)}</strong><span>${esc(s.sub)}</span></span>
   </button>
   <div class="notice-body">

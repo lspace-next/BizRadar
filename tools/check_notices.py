@@ -22,7 +22,7 @@ TYPES = {"rnd", "support", "bid"}
 FITS = {"high", "mid"}
 TAGS = {"AI", "SW개발", "데이터", "클라우드", "보안", "디지털전환", "제조·스마트공장", "조선·해양", "네트워크·통신", "공공정보화", "기타IT"}
 REQUIRED = ["id", "type", "title", "agency", "source", "url", "src_ids", "posted", "deadline", "budget", "budget_won",
-            "summary", "conditions", "tags", "fit", "added", "updated"]
+            "summary", "why", "conditions", "tags", "fit", "added", "updated"]
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 DEADLINE = re.compile(r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$")
 
@@ -88,6 +88,11 @@ def check(notices, label, fails, warns, today):
             fails.append(f"{where}: summary 비어 있음")
         elif len(s) > 400:
             warns.append(f"{where}: summary {len(s)}자 (2–3문장 권장)")
+        w = n["why"].strip()
+        if not w:
+            fails.append(f"{where}: why 비어 있음 (L.SPACE 입장에서 왜 중요한가 1문장)")
+        elif len(w) > 160:
+            warns.append(f"{where}: why {len(w)}자 (1문장 권장)")
         if not isinstance(n["conditions"], list):
             fails.append(f"{where}: conditions 는 목록")
         elif not n["conditions"]:

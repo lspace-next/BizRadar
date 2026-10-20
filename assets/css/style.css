@@ -211,6 +211,30 @@ button, input, select { font: inherit; color: inherit; }
 .notice-title { grid-column: 1; margin: 2px 0 0; font-size: 16px; font-weight: 700; line-height: 1.45; letter-spacing: -0.015em; }
 .notice-key { grid-column: 1; display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13.5px; color: var(--text-sub); }
 .notice-key b { font-weight: 600; color: var(--text); }
+.notice-why {
+  grid-column: 1;
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--type) 8%, transparent);
+  border-left: 3px solid var(--type);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--text);
+}
+/* 라벨은 CSS 가 그린다 — 데이터 why 에는 "왜 중요한가:" 를 쓰지 않는다 */
+.notice-why::before {
+  content: "WHY IT MATTERS";
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--type);
+}
 
 .dday {
   grid-column: 2;
