@@ -12,9 +12,9 @@
 
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  // KST 기준 오늘 (YYYY-MM-DD)
-  function todayKST() {
-    return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  // KST 기준 지금 (YYYY-MM-DDTHH:MM) — 앞 10자리가 오늘
+  function nowKST() {
+    return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16);
   }
   function dayDiff(a, b) {
     return Math.round((Date.parse(b) - Date.parse(a)) / 86400e3);
@@ -22,13 +22,15 @@
   const md = (d) => (d ? d.slice(5, 10).replace("-", ".") : "");
 
   // 마감 상태: closed / urgent(D-7 이내) / open / soon(접수 시작 전) / always(마감일 없음)
-  function stateOf(n, today) {
+  // 마감 시각이 있으면 그 시각이 지나는 순간 마감, 날짜만 있으면 그날 자정이 지나야 마감.
+  function stateOf(n, now) {
+    const today = now.slice(0, 10);
     const end = n.deadline ? n.deadline.slice(0, 10) : "";
     if (!end) return { key: "always", label: "상시", sub: "마감일 공고문 확인" };
     const left = dayDiff(today, end);
-    const time = n.deadline.length > 10 ? " " + n.deadline.slice(11, 16) : "";
-    const sub = `${md(end)}${time} 마감`;
-    if (left < 0) return { key: "closed", label: "마감", sub, left };
+    const hasTime = n.deadline.length > 10;
+    const sub = `${md(end)}${hasTime ? " " + n.deadline.slice(11, 16) : ""} 마감`;
+    if (left < 0 || (hasTime && now >= n.deadline.slice(0, 16))) return { key: "closed", label: "마감", sub, left };
     if (n.start && n.start > today) return { key: "soon", label: `접수 ${md(n.start)}~`, sub, left };
     if (left <= URGENT_DAYS) return { key: "urgent", label: left === 0 ? "D-DAY" : `D-${left}`, sub, left };
     return { key: "open", label: `D-${left}`, sub, left };
@@ -37,7 +39,6 @@
   const state = { type: "all", status: "open", tag: "", fit: "", q: "", sort: "deadline", only: "" };
   let notices = [];
   let meta = {};
-  let today = todayKST();
   let newDate = "";
 
   function readParams() {
@@ -285,11 +286,34 @@
     ]);
     notices = ns;
     meta = m;
-    today = todayKST();
     newDate = (meta.last_run || "").slice(0, 10) || notices.reduce((a, n) => (n.added > a ? n.added : a), "");
-    for (const n of notices) n._state = stateOf(n, today);
+    refreshStates();
     if (meta.last_run) {
       $("#updated").textContent = `${md(meta.last_run)} ${meta.last_run.slice(11, 16)} 업데이트`;
+    }
+  }
+
+  // 상태를 다시 계산하고 바뀐 공고가 있으면 true
+  function refreshStates() {
+    const now = nowKST();
+    let changed = false;
+    for (const n of notices) {
+      const st = stateOf(n, now);
+      if (!n._state || n._state.key !== st.key || n._state.label !== st.label) changed = true;
+      n._state = st;
+    }
+    return changed;
+  }
+
+  // 페이지를 열어 둔 채 마감 시각이 지나도 바로 반영되도록 1분마다 다시 계산한다(펼친 공고는 유지)
+  function tick() {
+    if (!refreshStates()) return;
+    const open = [...document.querySelectorAll(".notice.is-open")].map((el) => el.id);
+    renderStats();
+    render();
+    for (const id of open) {
+      const el = document.getElementById(id);
+      if (el) toggle(el, true);
     }
   }
 
@@ -301,6 +325,7 @@
       renderStats();
       render();
       openFromHash();
+      setInterval(tick, 60e3);
     })
     .catch((e) => {
       $("#list").innerHTML = `<p class="empty">공고 데이터를 불러오지 못했습니다. (${esc(e.message)})</p>`;
