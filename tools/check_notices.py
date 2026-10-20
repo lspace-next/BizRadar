@@ -58,6 +58,8 @@ def check(notices, label, fails, warns, today):
             fails.append(f"{where}: type '{n['type']}' (rnd/support/bid)")
         if n["fit"] not in FITS:
             fails.append(f"{where}: fit '{n['fit']}' (high/mid)")
+        if "attach" in n:
+            fails.append(f"{where}: attach 는 쓰지 않음 (첨부는 원문 공고에서 확인)")
         if not n["title"].strip() or not n["agency"].strip():
             fails.append(f"{where}: 제목·기관 비어 있음")
         if not n["url"].startswith("https://") and not n["url"].startswith("http://"):
@@ -100,10 +102,6 @@ def check(notices, label, fails, warns, today):
             b = n.get("bid")
             if not isinstance(b, dict) or "method" not in b:
                 fails.append(f"{where}: 입찰 공고는 bid.method 필요")
-        for a in n.get("attach", []):
-            if not isinstance(a, dict) or not a.get("name") or not a.get("url"):
-                fails.append(f"{where}: attach 항목은 {{name, url}}")
-                break
     return ids
 
 
@@ -146,9 +144,7 @@ def main():
     if "--no-links" not in args:
         targets = notices if "--links" in args else [n for n in notices if n.get("updated") == today]
         for n in targets:
-            for u in [n.get("url", "")] + [a.get("url", "") for a in n.get("attach", []) if isinstance(a, dict)][:1]:
-                if not u:
-                    continue
+            for u in [n.get("url", "")]:
                 code = status(u)
                 if code in (401, 403, 405) or code == 0:
                     warns.append(f"{n['id']}: 링크 확인 불가({code}) — 브라우저/WebFetch 로 확인 {u}")

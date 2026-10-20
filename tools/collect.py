@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -32,6 +33,7 @@ KEYWORDS = [
     "디지털트윈", "디지털 트윈", "DX", "메타버스", "보안", "사이버", "블록체인", "자율", "로봇",
     "스마트공장", "스마트 공장", "스마트제조", "스마트시티", "알고리즘", "지능형", "XR", "IoT", "사물인터넷",
     "5G", "6G", "양자", "SI", "솔루션", "S/W", "모바일", "전자정부", "공공데이터", "마이데이터",
+    "조선", "선박", "해양", "자율운항", "스마트야드", "기자재",  # 조선·해양 IT 가 주력 분야
 ]
 _SHORT = {k for k in KEYWORDS if re.fullmatch(r"[A-Za-z0-9]{1,4}", k)}
 _KW_RE = re.compile("|".join(
@@ -42,13 +44,39 @@ OFF_TOPIC = ["의약", "신약", "임상", "농식품", "축산", "수산", "산
              "수출바우처", "전시회", "박람회", "엑스포", "인력교류", "장학", "채용", "입점", "판로", "물류비", "측정기기",
              "IR ", "상담회", "품질인증"]
 REVISION = re.compile(r"정정|연장|재공고|변경|수정공고|추가공고|추가 공고")
+# 지역: 전국 공고와 부산·경남만 싣는다. 제목 머리의 [지역] 이 이 밖이면 후보에서 뺀다.
+HOME_REGIONS = ("부산", "경남")
+OTHER_REGIONS = ["서울", "인천", "경기", "강원", "충북", "충남", "대전", "세종", "전북", "전남", "광주", "대구", "경북",
+                 "울산", "제주"]
+_OTHER_RE = re.compile("|".join(OTHER_REGIONS))
+# 키워드 필터 없이 전부 후보로 보는 소스 (조선·해양 전문기관 — 건수가 적고 주력 분야)
+NO_KEYWORD_FILTER = {"rims"}
 
 
-def fetch(url, data=None, timeout=30):
+def region_of(title):
+    """('home'|'other'|'', 표시용 지역명). 제목 머리 [지역] 기준, 없으면 본문 지역명은 표시만."""
+    m = re.match(r"\s*\[([^\]]+)\]", title)
+    if m:
+        tag = m[1]
+        if any(r in tag for r in HOME_REGIONS):
+            return "home", tag
+        if _OTHER_RE.search(tag):
+            return "other", tag
+    hit = _OTHER_RE.search(title)
+    return "", hit[0] if hit else ""
+
+
+def fetch(url, data=None, timeout=30, ua=UA):
     body = urllib.parse.urlencode(data).encode() if isinstance(data, dict) else data
-    req = urllib.request.Request(url, data=body, headers={"User-Agent": UA, "Accept-Language": "ko-KR,ko"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read().decode(r.headers.get_content_charset() or "utf-8", errors="replace")
+    req = urllib.request.Request(url, data=body, headers={"User-Agent": ua, "Accept-Language": "ko-KR,ko"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read().decode(r.headers.get_content_charset() or "utf-8", errors="replace")
+    except urllib.error.HTTPError as e:
+        # 일부 기관(중소조선연구원 등)은 전체 브라우저 UA 문자열을 막고 짧은 UA 는 통과시킨다
+        if e.code == 403 and ua == UA:
+            return fetch(url, data, timeout, ua="Mozilla/5.0")
+        raise
 
 
 def text(fragment):
@@ -184,6 +212,41 @@ def nipa(since):
     return out
 
 
+def rims(since):
+    """중소조선연구원 사업공고·입찰공고 (그누보드 게시판. 날짜가 MM-DD 라 연도를 추정한다)"""
+    out, today = [], dt.datetime.now(KST).date()
+    for table, kind in (("m0602", "support"), ("m0605", "bid")):
+        s = fetch(f"https://www.rims.re.kr/bbs/board.php?bo_table={table}")
+        body = s.split("<tbody", 1)[-1].split("</tbody>", 1)[0]
+        for row in re.findall(r"<tr[^>]*>(.*?)</tr>", body, re.S):
+            a = re.search(r'<a href="([^"]*wr_id=(\d+))"[^>]*>(.*?)</a>', row, re.S)
+            d = re.search(r'td_datetime">\s*([\d-]+)', row)
+            if not a or not d:
+                continue
+            raw = d[1]
+            if re.fullmatch(r"\d{2}-\d{2}", raw):  # 올해 글은 MM-DD, 지난해 글은 YY-MM-DD
+                y = today.year - (1 if raw > today.strftime("%m-%d") else 0)
+                raw = f"{y}-{raw}"
+            elif re.fullmatch(r"\d{2}-\d{2}-\d{2}", raw):
+                raw = "20" + raw
+            posted = ymd(raw)
+            if posted and posted < since:
+                continue
+            title = text(a[3])
+            if "(마감)" in title:
+                continue
+            # 제목에 마감이 적힌 경우: (~26.10.08)
+            m = re.search(r"~\s*(\d{2})\.(\d{1,2})\.(\d{1,2})", title)
+            end = f"20{m[1]}-{int(m[2]):02d}-{int(m[3]):02d}" if m else ""
+            out.append({
+                "src": "중소조선연구원", "src_id": f"rims:{table}-{a[2]}", "type": kind, "title": title,
+                "agency": "중소조선연구원", "posted": posted, "start": "", "end": end,
+                "url": html.unescape(a[1]), "extra": {"board": "사업공고" if table == "m0602" else "입찰공고"},
+            })
+    # 공지(상단 고정)와 일반 목록에 같은 글이 두 번 나오므로 합친다
+    return list({r["src_id"]: r for r in out}.values())
+
+
 def g2b(since):
     """나라장터 용역 입찰공고 (공공데이터포털 조달청_나라장터 입찰공고정보서비스, 인증키 필요)"""
     key = os.environ.get("DATA_GO_KR_KEY")
@@ -232,7 +295,7 @@ def g2b(since):
     return keep
 
 
-SOURCES = {"ntis": ntis, "iris": iris, "bizinfo": bizinfo, "nipa": nipa, "g2b": g2b}
+SOURCES = {"ntis": ntis, "iris": iris, "bizinfo": bizinfo, "nipa": nipa, "rims": rims, "g2b": g2b}
 
 
 # ---------------------------------------------------------------- 필터·중복
@@ -286,13 +349,17 @@ def main():
         except Exception as e:  # 소스 하나가 막혀도 나머지는 계속
             report[name] = f"ERROR {type(e).__name__}: {e}"
             continue
-        kept = 0
+        kept = other = 0
         for r in rows:
             if r["end"] and r["end"] < today:
                 continue  # 이미 마감
+            scope, r["region"] = region_of(r["title"])
+            if scope == "other":
+                other += 1
+                continue  # 부산·경남 밖 지역 공고
             r["keywords"] = sorted(set(_KW_RE.findall(r["title"])))
             r["off_topic"] = [w for w in OFF_TOPIC if w in r["title"]]
-            if not args.all and not r["keywords"]:
+            if not args.all and not r["keywords"] and name not in NO_KEYWORD_FILTER:
                 continue
             r["known"] = known_ids.get(r["src_id"]) or known_ids.get(r["url"]) or ""
             nt = norm_title(r["title"])
@@ -301,7 +368,7 @@ def main():
             seen_titles.setdefault(nt, r["src_id"])
             cands.append(r)
             kept += 1
-        report[name] = f"{len(rows)}건 중 후보 {kept}건"
+        report[name] = f"{len(rows)}건 중 후보 {kept}건" + (f" (타 지역 {other}건 제외)" if other else "")
 
     new = [c for c in cands if not c["known"]]
     out = {"generated": dt.datetime.now(KST).isoformat(timespec="minutes"), "since": since,
@@ -315,7 +382,8 @@ def main():
     print(f"신규 후보 {len(new)}건 (이미 실린 공고 {len(out['known'])}건 제외)")
     for c in new:
         flags = "".join([" [정정?]" if c["revision"] else "", f" [중복? {c['maybe_dup_of']}]" if c["maybe_dup_of"] else "",
-                         f" [무관?{','.join(c['off_topic'])}]" if c["off_topic"] else ""])
+                         f" [무관?{','.join(c['off_topic'])}]" if c["off_topic"] else "",
+                         f" [지역? {c['region']}]" if c["region"] and not c["region"].startswith(HOME_REGIONS) else ""])
         print(f"  {c['src_id']:24} ~{c['end'] or '?':10} {c['title'][:70]}{flags}")
 
 

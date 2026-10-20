@@ -13,6 +13,7 @@ import io
 import re
 import struct
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -24,9 +25,18 @@ CACHE = ROOT / ".cache/files"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 
 
+def urlopen(url):
+    """전체 브라우저 UA 를 막는 기관(중소조선연구원 등)은 짧은 UA 로 한 번 더 시도한다"""
+    try:
+        return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA}), timeout=60)
+    except urllib.error.HTTPError as e:
+        if e.code != 403:
+            raise
+        return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=60)
+
+
 def download(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urlopen(url) as r:
         data = r.read()
         name = ""
         cd = r.headers.get("Content-Disposition", "")
@@ -160,8 +170,7 @@ def extract(data, name=""):
 
 def page(url):
     """상세 페이지 본문 + 첨부 URL"""
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urlopen(url) as r:
         s = r.read().decode("utf-8", "replace")
     host = "{0.scheme}://{0.netloc}".format(urllib.parse.urlparse(url))
     files = []

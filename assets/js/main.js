@@ -97,7 +97,6 @@
       if (bid.joint) facts.push(factRow("공동수급", bid.joint));
       if (bid.briefing) facts.push(factRow("설명회", bid.briefing));
     }
-    const attach = (n.attach || []).map((a) => `<a class="btn" href="${esc(a.url)}" target="_blank" rel="noopener">📎 ${esc(a.name)}</a>`).join("");
     return `
 <article class="notice${s.key === "closed" ? " is-closed" : ""}" id="n-${esc(n.id)}" data-type="${esc(n.type)}">
   <button class="notice-head" type="button" aria-expanded="false">
@@ -123,7 +122,6 @@
     <div class="tags">${(n.tags || []).map((t) => `<span class="tag">#${esc(t)}</span>`).join("")}<span class="tag">출처 ${esc(n.source)}</span></div>
     <div class="links">
       <a class="btn primary" href="${esc(n.url)}" target="_blank" rel="noopener">원문 공고 ↗</a>
-      ${attach}
       <button class="btn" type="button" data-copy="${esc(n.id)}">링크 복사</button>
     </div>
   </div>
