@@ -206,7 +206,8 @@ button, input, select { font: inherit; color: inherit; }
 .type-badge::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--type); margin-right: 5px; vertical-align: 1px; }
 .badge-new { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: #fff; background: var(--accent); border-radius: 4px; padding: 0 5px; letter-spacing: .04em; }
 .badge-upd { font-size: 11px; font-weight: 600; color: var(--accent); }
-.badge-fit { font-size: 11px; font-weight: 700; color: var(--s-open); }
+.badge-fit { font-size: 11px; font-weight: 700; color: var(--text-mute); }
+.badge-fit.high { color: var(--s-open); }
 
 .notice-title { grid-column: 1; margin: 2px 0 0; font-size: 16px; font-weight: 700; line-height: 1.45; letter-spacing: -0.015em; }
 .notice-key { grid-column: 1; display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13.5px; color: var(--text-sub); }
@@ -256,6 +257,28 @@ button, input, select { font: inherit; color: inherit; }
 .notice-body p { margin: 0; color: var(--text-sub); }
 .notice-body ul { margin: 0; padding-left: 18px; color: var(--text-sub); }
 .notice-body li { margin: 2px 0; }
+.notice-body ul.fit-list { list-style: none; padding: 0; display: grid; gap: 6px; }
+.fit-row { display: grid; grid-template-columns: 22px 72px 1fr; gap: 8px; align-items: baseline; margin: 0; }
+.fit-row b { font-weight: 600; color: var(--text); font-size: 14px; }
+.fit-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--text-mute);
+}
+.fit-row.ok .fit-mark { background: var(--s-open); }
+.fit-row.partial .fit-mark { background: #d97706; }
+.fit-row.no .fit-mark { background: var(--s-urgent); }
+.fit-row.check .fit-mark { background: var(--s-soon); }
+@media (max-width: 640px) {
+  .fit-row { grid-template-columns: 22px 1fr; }
+  .fit-row > span:last-child { grid-column: 2; }
+}
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 14px 0 0; font-size: 14px; }
 .facts dt { color: var(--text-mute); }
 .facts dd { margin: 0; color: var(--text); }

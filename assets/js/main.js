@@ -4,6 +4,8 @@
   "use strict";
 
   const TYPES = { rnd: "국가R&D", support: "지원사업", bid: "SW입찰" };
+  const FIT = { high: "적합도 높음", mid: "적합도 보통" };
+  const MARK = { ok: ["✓", "충족"], partial: ["△", "부분"], no: ["✗", "불충족"], check: ["?", "확인 필요"] };
   const URGENT_DAYS = 7;
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -59,7 +61,7 @@
     if (state.tag && !n.tags.includes(state.tag)) return false;
     if (state.fit && n.fit !== state.fit) return false;
     if (state.q) {
-      const hay = [n.title, n.agency, n.summary, n.why, n.budget, n.source, ...(n.conditions || []), ...(n.tags || [])].join(" ").toLowerCase();
+      const hay = [n.title, n.agency, n.summary, n.why, ...(n.fit_analysis || []).map((a) => a.note), n.budget, n.source, ...(n.conditions || []), ...(n.tags || [])].join(" ").toLowerCase();
       if (!state.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
     }
     return true;
@@ -103,7 +105,7 @@
     <span class="notice-meta">
       <span class="type-badge">${TYPES[n.type] || ""}</span>
       <span>${esc(n.agency)}</span>
-      ${n.fit === "high" ? '<span class="badge-fit">적합도 높음</span>' : ""}
+      <span class="badge-fit ${esc(n.fit)}">${FIT[n.fit] || ""}</span>
       ${isNew ? '<span class="badge-new">NEW</span>' : ""}${isUpd ? '<span class="badge-upd">업데이트</span>' : ""}
     </span>
     <h2 class="notice-title">${esc(n.title)}</h2>
@@ -117,6 +119,7 @@
   <div class="notice-body">
     <h3>요약</h3>
     <p>${esc(n.summary)}</p>
+    ${renderFit(n)}
     ${n.conditions && n.conditions.length ? `<h3>핵심 조건</h3><ul>${n.conditions.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
     <dl class="facts">${facts.join("")}</dl>
     ${n.note ? `<p class="note">ⓘ ${esc(n.note)}</p>` : ""}
@@ -127,6 +130,15 @@
     </div>
   </div>
 </article>`;
+  }
+
+  function renderFit(n) {
+    const rows = (n.fit_analysis || []).map((a) => {
+      const m = MARK[a.result] || ["", ""];
+      return `<li class="fit-row ${esc(a.result)}"><span class="fit-mark" title="${m[1]}">${m[0]}</span><b>${esc(a.item)}</b><span>${esc(a.note)}</span></li>`;
+    });
+    if (!rows.length) return "";
+    return `<h3>적합도 분석 · ${FIT[n.fit] || ""}</h3><ul class="fit-list">${rows.join("")}</ul>`;
   }
 
   function renderStats() {

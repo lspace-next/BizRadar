@@ -20,9 +20,11 @@ KST = dt.timezone(dt.timedelta(hours=9))
 
 TYPES = {"rnd", "support", "bid"}
 FITS = {"high", "mid"}
+FIT_ITEMS = ["분야", "주관 자격", "지역", "부담·조건"]  # 순서 고정
+FIT_RESULTS = {"ok", "partial", "no", "check"}
 TAGS = {"AI", "SW개발", "데이터", "클라우드", "보안", "디지털전환", "제조·스마트공장", "조선·해양", "네트워크·통신", "공공정보화", "기타IT"}
 REQUIRED = ["id", "type", "title", "agency", "source", "url", "src_ids", "posted", "deadline", "budget", "budget_won",
-            "summary", "why", "conditions", "tags", "fit", "added", "updated"]
+            "summary", "why", "conditions", "tags", "fit", "fit_analysis", "added", "updated"]
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 DEADLINE = re.compile(r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$")
 
@@ -93,6 +95,20 @@ def check(notices, label, fails, warns, today):
             fails.append(f"{where}: why 비어 있음 (L.SPACE 입장에서 왜 중요한가 1문장)")
         elif len(w) > 160:
             warns.append(f"{where}: why {len(w)}자 (1문장 권장)")
+        fa = n["fit_analysis"]
+        if not isinstance(fa, list) or [a.get("item") for a in fa if isinstance(a, dict)] != FIT_ITEMS:
+            fails.append(f"{where}: fit_analysis 는 {FIT_ITEMS} 순서의 항목 목록")
+        else:
+            res = {a["item"]: a.get("result") for a in fa}
+            for a in fa:
+                if a.get("result") not in FIT_RESULTS:
+                    fails.append(f"{where}: fit_analysis '{a['item']}' result '{a.get('result')}' (ok/partial/no/check)")
+                if not str(a.get("note", "")).strip():
+                    fails.append(f"{where}: fit_analysis '{a['item']}' note 비어 있음")
+            if n["fit"] == "high" and any(res[k] != "ok" for k in ("분야", "주관 자격", "지역")):
+                fails.append(f"{where}: fit high 는 분야·주관 자격·지역이 모두 ok 여야 함")
+            if res.get("지역") == "no":
+                fails.append(f"{where}: 지역 불충족 공고는 싣지 않음")
         if not isinstance(n["conditions"], list):
             fails.append(f"{where}: conditions 는 목록")
         elif not n["conditions"]:
