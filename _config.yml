@@ -1,0 +1,8 @@
+# GitHub Pages(Jekyll) 설정: 저장소에는 있어야 하지만 사이트로 공개할 필요가 없는 운영 파일을 배포에서 뺀다.
+# 새 운영 파일·폴더를 추가하면 여기에도 추가할 것.
+exclude:
+  - CLAUDE.md
+  - README.md
+  - tools/
+  - .claude/
+  - .cache/

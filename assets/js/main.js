@@ -1,0 +1,274 @@
+/* L.SPACE Biz Radar — 공고 목록 렌더 · 필터 · D-day.
+   데이터: data/notices.json (공고), data/meta.json (마지막 실행). 상태(접수예정/접수중/임박/마감)는 저장하지 않고 여기서 계산한다. */
+(function () {
+  "use strict";
+
+  const TYPES = { rnd: "국가R&D", support: "지원사업", bid: "SW입찰" };
+  const URGENT_DAYS = 7;
+  const $ = (s, el = document) => el.querySelector(s);
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // KST 기준 오늘 (YYYY-MM-DD)
+  function todayKST() {
+    return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  }
+  function dayDiff(a, b) {
+    return Math.round((Date.parse(b) - Date.parse(a)) / 86400e3);
+  }
+  const md = (d) => (d ? d.slice(5, 10).replace("-", ".") : "");
+
+  // 마감 상태: closed / urgent(D-7 이내) / open / soon(접수 시작 전) / always(마감일 없음)
+  function stateOf(n, today) {
+    const end = n.deadline ? n.deadline.slice(0, 10) : "";
+    if (!end) return { key: "always", label: "상시", sub: "마감일 공고문 확인" };
+    const left = dayDiff(today, end);
+    const time = n.deadline.length > 10 ? " " + n.deadline.slice(11, 16) : "";
+    const sub = `${md(end)}${time} 마감`;
+    if (left < 0) return { key: "closed", label: "마감", sub, left };
+    if (n.start && n.start > today) return { key: "soon", label: `접수 ${md(n.start)}~`, sub, left };
+    if (left <= URGENT_DAYS) return { key: "urgent", label: left === 0 ? "D-DAY" : `D-${left}`, sub, left };
+    return { key: "open", label: `D-${left}`, sub, left };
+  }
+
+  const state = { type: "all", status: "open", tag: "", fit: "", q: "", sort: "deadline", only: "" };
+  let notices = [];
+  let meta = {};
+  let today = todayKST();
+  let newDate = "";
+
+  function readParams() {
+    const p = new URLSearchParams(location.search);
+    for (const k of Object.keys(state)) if (p.has(k)) state[k] = p.get(k);
+  }
+  function writeParams() {
+    const p = new URLSearchParams();
+    const def = { type: "all", status: "open", sort: "deadline" };
+    for (const [k, v] of Object.entries(state)) if (v && v !== def[k]) p.set(k, v);
+    const qs = p.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+  }
+
+  function matches(n, opts = {}) {
+    const st = n._state.key;
+    if (!opts.ignoreType && state.type !== "all" && n.type !== state.type) return false;
+    if (state.status === "open" && st === "closed") return false;
+    if (state.status === "closed" && st !== "closed") return false;
+    if (state.only === "new" && n.added !== newDate && n.updated !== newDate) return false;
+    if (state.only === "urgent" && st !== "urgent") return false;
+    if (state.tag && !n.tags.includes(state.tag)) return false;
+    if (state.fit && n.fit !== state.fit) return false;
+    if (state.q) {
+      const hay = [n.title, n.agency, n.summary, n.budget, n.source, ...(n.conditions || []), ...(n.tags || [])].join(" ").toLowerCase();
+      if (!state.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
+    }
+    return true;
+  }
+
+  function sortList(list) {
+    const endKey = (n) => (n.deadline ? n.deadline : "9999");
+    const by = {
+      deadline: (a, b) => (a._state.key === "closed") - (b._state.key === "closed") ||
+        (a._state.key === "closed" ? endKey(b).localeCompare(endKey(a)) : endKey(a).localeCompare(endKey(b))),
+      new: (a, b) => b.added.localeCompare(a.added) || b.posted.localeCompare(a.posted),
+      budget: (a, b) => (b.budget_won || 0) - (a.budget_won || 0) || endKey(a).localeCompare(endKey(b)),
+    };
+    return list.sort(by[state.sort] || by.deadline);
+  }
+
+  function factRow(label, value) {
+    return `<dt>${label}</dt><dd>${value ? esc(value) : '<em class="unknown">공고문 확인</em>'}</dd>`;
+  }
+
+  function renderNotice(n) {
+    const s = n._state;
+    const isNew = n.added === newDate;
+    const isUpd = !isNew && n.updated === newDate;
+    const bid = n.bid || {};
+    const facts = [
+      factRow("기관", n.agency),
+      factRow("규모", n.budget),
+      factRow("접수", (n.start ? n.start + " ~ " : "") + (n.deadline ? n.deadline.replace("T", " ") : "")),
+      factRow("공고일", n.posted),
+    ];
+    if (n.type === "bid") {
+      facts.push(factRow("계약방법", bid.method));
+      if (bid.big_corp_limit !== undefined) facts.push(factRow("대기업 참여", bid.big_corp_limit ? "제한" : "제한 없음"));
+      if (bid.joint) facts.push(factRow("공동수급", bid.joint));
+      if (bid.briefing) facts.push(factRow("설명회", bid.briefing));
+    }
+    const attach = (n.attach || []).map((a) => `<a class="btn" href="${esc(a.url)}" target="_blank" rel="noopener">📎 ${esc(a.name)}</a>`).join("");
+    return `
+<article class="notice${s.key === "closed" ? " is-closed" : ""}" id="n-${esc(n.id)}" data-type="${esc(n.type)}">
+  <button class="notice-head" type="button" aria-expanded="false">
+    <span class="notice-meta">
+      <span class="type-badge">${TYPES[n.type] || ""}</span>
+      <span>${esc(n.agency)}</span>
+      ${n.fit === "high" ? '<span class="badge-fit">적합도 높음</span>' : ""}
+      ${isNew ? '<span class="badge-new">NEW</span>' : ""}${isUpd ? '<span class="badge-upd">업데이트</span>' : ""}
+    </span>
+    <h2 class="notice-title">${esc(n.title)}</h2>
+    <span class="notice-key">
+      <span>규모 <b>${n.budget ? esc(n.budget) : "공고문 확인"}</b></span>
+      ${n.conditions && n.conditions[0] ? `<span>${esc(n.conditions[0])}</span>` : ""}
+    </span>
+    <span class="dday ${s.key}"><strong>${esc(s.label)}</strong><span>${esc(s.sub)}</span></span>
+  </button>
+  <div class="notice-body">
+    <h3>요약</h3>
+    <p>${esc(n.summary)}</p>
+    ${n.conditions && n.conditions.length ? `<h3>핵심 조건</h3><ul>${n.conditions.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+    <dl class="facts">${facts.join("")}</dl>
+    ${n.note ? `<p class="note">ⓘ ${esc(n.note)}</p>` : ""}
+    <div class="tags">${(n.tags || []).map((t) => `<span class="tag">#${esc(t)}</span>`).join("")}<span class="tag">출처 ${esc(n.source)}</span></div>
+    <div class="links">
+      <a class="btn primary" href="${esc(n.url)}" target="_blank" rel="noopener">원문 공고 ↗</a>
+      ${attach}
+      <button class="btn" type="button" data-copy="${esc(n.id)}">링크 복사</button>
+    </div>
+  </div>
+</article>`;
+  }
+
+  function renderStats() {
+    const open = notices.filter((n) => n._state.key !== "closed");
+    const tiles = [
+      { n: open.length, label: "접수중·예정 공고", act: { only: "", status: "open" } },
+      { n: notices.filter((n) => n.added === newDate).length, label: `${md(newDate) || "최근"} 신규`, cls: "is-new", act: { only: "new", status: "all" } },
+      { n: open.filter((n) => n._state.key === "urgent").length, label: `${URGENT_DAYS}일 내 마감`, cls: "is-urgent", act: { only: "urgent", status: "open" } },
+      { n: open.filter((n) => n.fit === "high").length, label: "적합도 높음", act: { only: "", fit: "high", status: "open" } },
+    ];
+    $("#stats").innerHTML = tiles.map((t, i) => `<button class="stat ${t.cls || ""}" type="button" data-i="${i}"><b>${t.n}</b><span>${t.label}</span></button>`).join("");
+    $("#stats").onclick = (e) => {
+      const b = e.target.closest(".stat");
+      if (!b) return;
+      Object.assign(state, { type: "all", tag: "", fit: "", q: "", only: "" }, tiles[b.dataset.i].act);
+      syncControls();
+      render();
+    };
+  }
+
+  function renderTabs() {
+    const counts = { all: 0 };
+    for (const n of notices) {
+      if (!matches(n, { ignoreType: true })) continue;
+      counts.all++;
+      counts[n.type] = (counts[n.type] || 0) + 1;
+    }
+    $("#tabs").innerHTML = [["all", "전체"], ...Object.entries(TYPES)]
+      .map(([k, label]) => `<button class="tab" type="button" data-type="${k}" aria-pressed="${state.type === k}">${label}<span class="n">${counts[k] || 0}</span></button>`)
+      .join("");
+  }
+
+  function renderChips() {
+    const tags = [...new Set(notices.flatMap((n) => n.tags || []))].sort((a, b) => a.localeCompare(b, "ko"));
+    $("#chips").innerHTML = tags.map((t) => `<button class="chip" type="button" data-tag="${esc(t)}" aria-pressed="${state.tag === t}">#${esc(t)}</button>`).join("");
+  }
+
+  function render() {
+    renderTabs();
+    renderChips();
+    const list = sortList(notices.filter((n) => matches(n)));
+    const extra = state.only === "new" ? " · 신규·업데이트만" : state.only === "urgent" ? ` · ${URGENT_DAYS}일 내 마감만` : "";
+    $("#count").textContent = `${list.length}건${extra}`;
+    $("#list").innerHTML = list.length ? list.map(renderNotice).join("") : '<p class="empty">조건에 맞는 공고가 없습니다.</p>';
+    writeParams();
+  }
+
+  function syncControls() {
+    $("#q").value = state.q;
+    $("#status").value = state.status;
+    $("#fit").value = state.fit;
+    $("#sort").value = state.sort;
+  }
+
+  function openFromHash() {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id.startsWith("n-")) return;
+    let el = document.getElementById(id);
+    if (!el) {
+      // 필터에 가려졌으면 풀고 다시 그린다
+      Object.assign(state, { type: "all", status: "all", tag: "", fit: "", q: "", only: "" });
+      syncControls();
+      render();
+      el = document.getElementById(id);
+    }
+    if (el) {
+      toggle(el, true);
+      el.scrollIntoView({ block: "start" });
+    }
+  }
+
+  function toggle(el, open) {
+    const on = open === undefined ? !el.classList.contains("is-open") : open;
+    el.classList.toggle("is-open", on);
+    $(".notice-head", el).setAttribute("aria-expanded", on);
+  }
+
+  function bind() {
+    $("#tabs").onclick = (e) => {
+      const b = e.target.closest(".tab");
+      if (!b) return;
+      state.type = b.dataset.type;
+      render();
+    };
+    $("#chips").onclick = (e) => {
+      const b = e.target.closest(".chip");
+      if (!b) return;
+      state.tag = state.tag === b.dataset.tag ? "" : b.dataset.tag;
+      render();
+    };
+    let t;
+    $("#q").oninput = (e) => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 150);
+    };
+    for (const k of ["status", "fit", "sort"]) {
+      $("#" + k).onchange = (e) => { state[k] = e.target.value; render(); };
+    }
+    $("#list").onclick = (e) => {
+      const copy = e.target.closest("[data-copy]");
+      if (copy) {
+        const url = location.origin + location.pathname + "#n-" + copy.dataset.copy;
+        navigator.clipboard && navigator.clipboard.writeText(url).then(() => {
+          copy.textContent = "복사됨";
+          setTimeout(() => (copy.textContent = "링크 복사"), 1500);
+        });
+        return;
+      }
+      const head = e.target.closest(".notice-head");
+      if (head) toggle(head.closest(".notice"));
+    };
+    window.addEventListener("hashchange", openFromHash);
+  }
+
+  async function load() {
+    const root = document.body.dataset.root || "";
+    const v = "?t=" + Math.floor(Date.now() / 600e3); // Pages 캐시(10분) 우회
+    const [ns, m] = await Promise.all([
+      fetch(root + "data/notices.json" + v).then((r) => r.json()),
+      fetch(root + "data/meta.json" + v).then((r) => r.json()).catch(() => ({})),
+    ]);
+    notices = ns;
+    meta = m;
+    today = todayKST();
+    newDate = (meta.last_run || "").slice(0, 10) || notices.reduce((a, n) => (n.added > a ? n.added : a), "");
+    for (const n of notices) n._state = stateOf(n, today);
+    if (meta.last_run) {
+      $("#updated").textContent = `${md(meta.last_run)} ${meta.last_run.slice(11, 16)} 업데이트`;
+    }
+  }
+
+  readParams();
+  bind();
+  load()
+    .then(() => {
+      syncControls();
+      renderStats();
+      render();
+      openFromHash();
+    })
+    .catch((e) => {
+      $("#list").innerHTML = `<p class="empty">공고 데이터를 불러오지 못했습니다. (${esc(e.message)})</p>`;
+    });
+})();

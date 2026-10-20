@@ -1,0 +1,201 @@
+[
+  {
+    "id": "bizinfo-PBLN_000000000126979",
+    "type": "support",
+    "title": "[충남] 2027년 지역선도기업사업화지원 공고 (지역디지털기업성장지원사업)",
+    "agency": "충청남도·NIPA / 충남테크노파크",
+    "source": "기업마당",
+    "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126979",
+    "src_ids": [
+      "bizinfo:PBLN_000000000126979"
+    ],
+    "attach": [],
+    "posted": "2026-10-06",
+    "start": "2026-10-26",
+    "deadline": "2026-11-02",
+    "budget": "",
+    "budget_won": 0,
+    "summary": "NIPA와 충청남도가 2027년에 추진하는 지역 SW 선도기업 육성 사업으로, 충남 디지털 진흥전략에 맞는 SW·AI 융합 제품(서비스) 개발 비용을 지원한다. 제품 상용화·국내외 마케팅·테스트·투자유치 등을 기업 수요에 맞춰 자율형으로 지원한다.",
+    "conditions": [
+      "충남 소재 SW 중소기업만 (중견·대기업 불가)",
+      "충남 디지털 진흥전략에 부합하는 SW·AI 융합 제품 개발",
+      "이메일·우편 접수 (충남테크노파크)"
+    ],
+    "tags": [
+      "SW개발",
+      "AI"
+    ],
+    "fit": "mid",
+    "added": "2026-10-20",
+    "updated": "2026-10-20"
+  },
+  {
+    "id": "iris-024397",
+    "type": "rnd",
+    "title": "2026년 지역거점 AX 혁신 기술개발 사업 신규지원 대상과제 공고 (표준모델 AX R&D)",
+    "agency": "과기정통부 / 정보통신산업진흥원(지역거점AX혁신기술개발사업단)",
+    "source": "IRIS",
+    "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024397",
+    "src_ids": [
+      "iris:024397",
+      "ntis:1279968"
+    ],
+    "attach": [
+      {
+        "name": "공고문·RFP 일체(zip)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=rHQyIkTIC1vALVJA5eIPfA%3D%3D&atchFileId=IbWoCg%2BttkaFgdXYctOR%2FA%3D%3D"
+      }
+    ],
+    "posted": "2026-10-08",
+    "start": "2026-10-26",
+    "deadline": "2026-11-09T17:00",
+    "budget": "6개 과제 · '26년 88.4억 원 (총 768.3억, ~2030년, 국비+지방비)",
+    "budget_won": 76833000000,
+    "summary": "대구를 AX 연구개발 거점으로 키우는 사업의 표준모델 트랙으로, 바이오·의료 제조공정용 AI 표준모델 3개와 휴머노이드 특화 AI(멀티모달 인간-로봇 공생 모델, 온디바이스 로봇 AI 경량화, 다중 감각 센싱) 3개 과제를 지정공모한다. 과제당 총 70억~218억 원 규모로 1단계(~2028)·2단계(~2030) 단계평가를 거치는 무빙타겟 방식이다.",
+    "conditions": [
+      "주관: 대구 소재 기관(역외 기관은 협약 전 본사·연구소 대구 이전)",
+      "공동기관에 대구 소재 AI·SW 정보통신기업 1곳 이상 필수 (그 외 공동기관은 지역 제한 없음)",
+      "기업 주관 시 기업부설연구소 보유 법인",
+      "민간부담: 중소 25%·중견 30%·대기업 50% 이상",
+      "파일럿 생산시설 실증은 대구 지역 내 수행"
+    ],
+    "tags": [
+      "AI",
+      "제조·스마트공장"
+    ],
+    "fit": "mid",
+    "added": "2026-10-20",
+    "updated": "2026-10-20",
+    "note": "NTIS 공고금액(2,286억)은 이 공고의 과제표 합계와 달라 공고문 과제표 기준으로 표시"
+  },
+  {
+    "id": "iris-024420",
+    "type": "rnd",
+    "title": "2026년 지역거점 AX 혁신 기술개발 사업 신규지원 대상과제 공고 (공정·응용 솔루션 AX R&D, 응용 제품 AX R&D)",
+    "agency": "과기정통부·산업부 / 한국연구재단·한국산업기술기획평가원",
+    "source": "IRIS",
+    "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024420",
+    "src_ids": [
+      "iris:024420",
+      "iris:024438",
+      "ntis:1279831",
+      "bizinfo:PBLN_000000000127197"
+    ],
+    "attach": [
+      {
+        "name": "공고문·RFP 일체(zip, NRF·KEIT)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=nD4UwA5pttGWZwitqqCbYg%3D%3D&atchFileId=uxbepGK%2BplMbjtzyFKAjug%3D%3D"
+      },
+      {
+        "name": "보건복지부(KHIDI) 분 공고(zip)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=2k0e4Etxnwmw7Zg7QZ6C4Q%3D%3D&atchFileId=qI1fPxy0I9CeLEIcor24qg%3D%3D"
+      }
+    ],
+    "posted": "2026-10-13",
+    "start": "2026-10-29",
+    "deadline": "2026-11-12T17:00",
+    "budget": "NRF·KEIT 10개 과제 · '26년 121.2억 원 (총 1,175.8억, ~2030년, 국비+지방비)",
+    "budget_won": 117584000000,
+    "summary": "지역거점 AX 사업의 응용 트랙으로, 과기정통부(NRF) 바이오·헬스케어 AI·SW 2개 과제와 산업부(KEIT) 휴머노이드 특화 AI·휴머노이드 제품 8개 과제를 공모한다. 다종 이동체 수직 통합 자율 플랫폼(모듈-시스템-SW 통합), 자율 제조 로보틱스 솔루션 등 SW 비중이 큰 과제가 포함돼 있다. 보건복지부(KHIDI) 분은 별도 공고(마감 11.13)로 나왔다.",
+    "conditions": [
+      "주관: 대구 소재 기관(역외 기관은 협약 전 대구 이전)",
+      "공동기관에 대구 소재 AI·SW 정보통신기업 1곳 이상 필수 (그 외 지역 제한 없음)",
+      "민간부담: 중소 25%·중견 30%·대기업 50% 이상",
+      "1차년도 기간: 과기정통부 5.5개월 / 산업부 4개월"
+    ],
+    "tags": [
+      "AI",
+      "제조·스마트공장",
+      "SW개발"
+    ],
+    "fit": "mid",
+    "added": "2026-10-20",
+    "updated": "2026-10-20",
+    "note": "KHIDI 분(iris 024438) 접수 10.30~11.13"
+  },
+  {
+    "id": "iris-023857",
+    "type": "rnd",
+    "title": "중소제조 특화 Multi AI Agent 개발(R&D) 점프업 Track 시행계획 공고",
+    "agency": "중기부 / 중소기업기술정보진흥원",
+    "source": "IRIS",
+    "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=023857",
+    "src_ids": [
+      "iris:023857",
+      "ntis:1277072"
+    ],
+    "attach": [
+      {
+        "name": "시행계획 공고문(hwpx)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=CxNvgsdrJJ7Jn0wJiUgjow%3D%3D&atchFileId=1iIMhMtpyNh9spz9cJwy5g%3D%3D"
+      },
+      {
+        "name": "신청방법·지원 제외사항(hwpx)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=CxNvgsdrJJ7Jn0wJiUgjow%3D%3D&atchFileId=dxy%2BQMCsDFPCffUKyqMJWA%3D%3D"
+      }
+    ],
+    "posted": "2026-08-31",
+    "start": "2026-10-01",
+    "deadline": "2026-10-30T18:00",
+    "budget": "총 156억 원 · 4개 과제 내외 (과제당 최대 39억, 24개월)",
+    "budget_won": 15600000000,
+    "summary": "제조현장의 비표준 작업 문제를 여러 AI 에이전트가 자율 판단해 해결하는 Multi AI Agent 개발·실증을 지원하는 R&D로, PoC 단계를 건너뛰고 바로 R&D 를 지원하는 점프업 Track 이다. AI 공급기업이 주관하고 제조 수요기업이 실증한다.",
+    "conditions": [
+      "스마트제조혁신R&D(첨단제조·유연생산) 완료과제(최종평가 60점 이상)의 주관·공동기관만 주관 신청 가능",
+      "공급기업(중소기업, 주관) + 수요기업(제조기업) 컨소시엄 필수",
+      "정부지원 75% 이내 · 기관부담 25% 이상(그중 10% 이상 현금)",
+      "수요기업 업종: 식품·뷰티·제약·자동차부품·섬유패션·생활소비재·기계장비·금속가공",
+      "선정평가 때 Multi AI Agent 프로토타입 1개 이상 시연 필수"
+    ],
+    "tags": [
+      "AI",
+      "제조·스마트공장"
+    ],
+    "fit": "mid",
+    "added": "2026-10-20",
+    "updated": "2026-10-20"
+  },
+  {
+    "id": "iris-024439",
+    "type": "rnd",
+    "title": "2026년도 AI 기반 주파수 간섭분석 및 전파예측기술 개발사업 신규지원 대상과제 공고",
+    "agency": "과기정통부 / 정보통신기획평가원",
+    "source": "IRIS",
+    "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024439",
+    "src_ids": [
+      "iris:024439",
+      "bizinfo:PBLN_000000000127270"
+    ],
+    "attach": [
+      {
+        "name": "공고문(hwp)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=il5zwUCl%2BCDPzDy%2FHJ8CbQ%3D%3D&atchFileId=BLUNm4i0zoJZRRsOHRDyrQ%3D%3D"
+      },
+      {
+        "name": "RFP: 수중 통신채널 환경 분석 및 예측 모델 개발(hwpx)",
+        "url": "https://www.iris.go.kr/comm/file/fileDownload.do?atchDocId=il5zwUCl%2BCDPzDy%2FHJ8CbQ%3D%3D&atchFileId=dY0qb77IOq4BKEk6XPJXDA%3D%3D"
+      }
+    ],
+    "posted": "2026-10-15",
+    "start": "2026-11-03",
+    "deadline": "2026-11-16T15:00",
+    "budget": "1개 과제 · '26년 6억 원 (총 정부지원 24.6억, 4년 이내)",
+    "budget_won": 2460000000,
+    "summary": "AI·빅데이터로 전파환경 분석 데이터와 실측 데이터를 결합해 주파수 간섭을 분석하고 전파 전달을 예측하는 기술을 개발하는 사업의 재공고다. 이번 과제는 수중 통신채널 환경을 분석·예측하는 모델 개발 1건이다.",
+    "conditions": [
+      "지정공모 · 주관기관 제한 없음",
+      "응용단계(TRL 3~5)",
+      "기술료 징수 대상 과제",
+      "연구기간 4년 이내(18개월+19개월 단계)"
+    ],
+    "tags": [
+      "AI",
+      "네트워크·통신",
+      "조선·해양"
+    ],
+    "fit": "mid",
+    "added": "2026-10-20",
+    "updated": "2026-10-20",
+    "note": "재공고"
+  }
+]

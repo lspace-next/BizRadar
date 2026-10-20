@@ -1,0 +1,125 @@
+# L.SPACE Biz Radar
+
+SI 회사 L.SPACE 가 수주·과제 기회를 놓치지 않도록 **국가R&D 과제 · 정부 지원사업 · 나라장터 SW 입찰공고** 중
+프로그램 개발·AI·IT 관련 공고만 매일 모아 사업명·내용·규모·신청기한·핵심 조건을 정리하는 정적 사이트(GitHub Pages).
+빌드 도구 없음. HTML/CSS/JS 와 JSON 데이터를 그대로 배포한다. 운영 방식은 L.SPACE Tech Radar(`lspace-next/WeeklyNews`)를 따른다.
+
+- **업데이트**: `/daily` (`.claude/commands/daily.md`). 평일 07:00 KST 클라우드 루틴이 `/daily auto` 를 실행해 `main` 에 푸시한다.
+  `tools/check_notices.py` 를 통과하지 못하면 푸시하지 않는다.
+- **SITE_URL**: `https://lspace-next.github.io/BizRadar`
+- **저장소**: https://github.com/lspace-next/BizRadar (main 브랜치 / root 를 Pages 로 배포)
+
+## 구조
+
+```
+index.html              공고 목록 (data/notices.json 렌더). 공고별 고정 링크는 index.html#n-<id>
+data/notices.json       공고 데이터 — 사이트의 단일 소스. added 최신순(새 공고는 배열 맨 앞)
+data/meta.json          last_run(마지막 실행 시각, KST) · new · updated(그 실행의 신규/갱신 건수)
+data/archive/YYYY.json  마감 후 60일 지난 공고 (마감 연도별). 사이트에는 안 나오고 중복 판정에만 쓴다
+assets/css/style.css    단일 스타일시트 (라이트/다크 자동)
+assets/js/main.js       목록 렌더 · 유형 탭 · 필터 · 정렬 · D-day/상태 계산
+tools/collect.py        소스별 목록 수집 → 키워드 1차 필터 → 이미 실린 공고 제외 → .cache/candidates.json
+tools/extract_text.py   상세 페이지 본문·첨부 URL 추출, 공고문(hwp/hwpx/pdf/zip) 텍스트 추출
+tools/check_notices.py  발행 전 검증 (스키마·날짜·중복·정렬·링크)
+.claude/sources.md      수집 소스·접근 방법·키워드·클라우드 루틴 허용 도메인
+.claude/commands/daily.md  매일 절차
+_config.yml             Pages 배포 제외 목록 (CLAUDE.md·README·tools·.claude)
+```
+
+- `.cache/` 는 작업용(후보·내려받은 공고문). 커밋하지 않는다.
+- 상태(접수예정/접수중/임박/마감)는 저장하지 않는다. `main.js` 가 `start`·`deadline` 과 오늘(KST)로 계산한다.
+
+## 공고 유형 (고정)
+
+| type | 화면 | 범위 |
+|---|---|---|
+| `rnd` | 국가R&D | NTIS·IRIS 에 올라오는 부처 R&D 신규과제 공고 (기술수요조사는 제외) |
+| `support` | 지원사업 | 기업마당·NIPA 등 비R&D 지원사업 (바우처·실증·보급·용역 수행기관 모집 등) |
+| `bid` | SW입찰 | 나라장터 용역 입찰공고 중 SW 개발·구축·고도화·유지관리·ISP·데이터 구축 |
+
+## 태그 (고정 — check_notices 가 검사)
+
+`AI` · `SW개발` · `데이터` · `클라우드` · `보안` · `디지털전환` · `제조·스마트공장` · `조선·해양` · `네트워크·통신` · `공공정보화` · `기타IT`
+
+한 공고에 1–3개. 태그를 바꾸면 이 줄과 `tools/check_notices.py` 의 `TAGS` 를 함께 고친다.
+
+## 선정 기준
+
+- **L.SPACE 가 주관·참여하거나 수주할 수 있는가**가 기준이다. SW 개발·AI·데이터·클라우드·시스템 구축이 과제의 중심이어야 한다.
+  - 넣는다: AI·SW 기술개발 R&D, AX/DX 솔루션 개발·실증, 공급기업으로 참여 가능한 바우처(AI·클라우드·데이터 바우처 등),
+    공공 정보시스템 구축·고도화 용역, 데이터 구축 사업, 스마트공장·조선 DX 솔루션 공급, 정보보호 솔루션 실증.
+  - 뺀다: 기술수요조사, 인력교류·장학·연수, 순수 학술·기초연구(대학 대상), 전시회·박람회·상담회 참가, 판로·입점·마케팅, 융자·보증,
+    창업자 모집(예비창업), 의약·바이오·농축수산 등 SW 가 부수적인 과제, 소상공인 대상, 1억 원 미만 소액 용역.
+  - 지자체 사업: 수요기업 모집이라도 **공급기업이 SI/SW 기업인 구조**면 `mid` 로 넣을 수 있다. 지역 소재 요건이 있으면 조건에 쓴다.
+- **fit**: `high` = L.SPACE 주력(SW 개발·AI·시스템 구축·조선/제조 DX)과 직접 맞고 주관 자격이 되는 것 / `mid` = 참여기관·공급기업으로 들어갈 수 있거나 분야가 인접한 것.
+  맞지 않으면 싣지 않는다(`low` 없음).
+- 같은 사업의 여러 트랙·과제(RFP)는 **공고 하나**로 묶고 트랙별 차이는 summary·conditions 에 쓴다. NTIS·IRIS·기업마당에 같은 공고가 있으면 하나로 합치고 `src_ids` 에 모두 넣는다.
+  `url` 은 원문(접수처) 우선순위: IRIS > 전문기관 > NTIS > 기업마당.
+
+## 데이터 규칙 (`data/notices.json`)
+
+```json
+{
+  "id": "iris-024439",
+  "type": "rnd",
+  "title": "2026년도 AI 기반 주파수 간섭분석 및 전파예측기술 개발사업 신규지원 대상과제 공고",
+  "agency": "과기정통부 / 정보통신기획평가원",
+  "source": "IRIS",
+  "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024439",
+  "src_ids": ["iris:024439", "ntis:1279xxx", "bizinfo:PBLN_000000000127270"],
+  "attach": [{"name": "공고문.hwp", "url": "https://..."}],
+  "posted": "2026-10-15",
+  "start": "2026-11-03",
+  "deadline": "2026-11-16T15:00",
+  "budget": "1개 과제 · '26년 6억 원 (총 24.6억, 4년 이내)",
+  "budget_won": 2460000000,
+  "summary": "직접 쓴 2–3문장. 무엇을 만드는 사업인지, 누가 무엇을 받는지.",
+  "conditions": ["지정공모 · 주관기관 제한 없음", "TRL 3–5 응용단계", "기관부담금: 중소기업 현금 10%"],
+  "tags": ["AI", "네트워크·통신"],
+  "fit": "high",
+  "bid": {"method": "협상에 의한 계약", "big_corp_limit": true, "joint": "공동수급 허용(분담이행)", "briefing": "2026-10-27 14:00 제안설명회"},
+  "added": "2026-10-20",
+  "updated": "2026-10-20",
+  "note": "정정공고(10.22): 마감 11.10 → 11.17"
+}
+```
+
+- **id**: `소스접두어-원번호` (`iris-024439`, `ntis-1279968`, `bizinfo-PBLN_000000000127316`, `nipa-16969`, `g2b-R26BK00000001-000`). 한 번 정하면 바꾸지 않는다.
+- **src_ids**: collect.py 의 `src_id` 형식(`iris:024439`). 같은 공고의 모든 소스 id 를 넣어야 다음 날 다시 후보로 안 뜬다.
+- **posted** 공고일, **start** 접수 시작일(접수 전이면 화면에 "접수 MM.DD~", 모르면 생략), **deadline** 접수 마감(시각을 알면 `THH:MM`, 상시·예산 소진 시까지면 `""`).
+- **budget**: 화면에 그대로 나오는 문구. 공고문 표현을 줄여 쓴다(총 사업비·과제당 지원액·기간). 입찰은 `추정가격 3.2억 원 (부가세 포함 여부)`. 모르면 `""` → 화면에 "공고문 확인".
+  **budget_won**: 정렬용 정부지원 총액(원). 모르면 `0`. 숫자를 지어내지 않는다.
+- **summary**: 원문 복사 금지, 직접 2–3문장. **conditions**: 신청 판단에 필요한 핵심만 2–5개(주관 자격·컨소시엄·매칭·지역 요건·대기업 참여 제한·사전 요건). 첫 항목이 목록 화면에 나오므로 가장 중요한 조건을 맨 앞에.
+- **bid**: `type: bid` 일 때만. `method`(계약방법) 필수, 나머지는 확인된 것만.
+- **added** 처음 실은 날, **updated** 마지막으로 내용을 고친 날(정정·연장 반영 포함). 화면은 meta.last_run 날짜와 같으면 NEW/업데이트 배지를 붙인다.
+- **note**: 정정·연장·재공고 이력 한 줄(선택).
+- 숫자·날짜·자격은 공고문(첨부)과 대조한다. 목록·상세 페이지 요약과 공고문이 다르면 공고문을 따른다. 확인 못 한 값은 비워 둔다.
+- 텍스트는 JSON 문자열 그대로(HTML 이스케이프 불필요, main.js 가 이스케이프).
+
+## 아카이브
+
+`/daily` 실행 때 마감 후 60일이 지난 공고를 `data/archive/<마감 연도>.json` 으로 옮긴다(배열, 같은 형식). 사이트 목록에는 안 나온다.
+
+## 커밋 컨벤션
+
+`Type: 한글 제목` — 타입은 첫 글자 대문자 + 콜론, 제목은 한글로 간결하게(마침표 없음).
+
+| Type | 용도 |
+|---|---|
+| Feat | 새 기능 |
+| Fix | 버그·오류 수정 |
+| Style | 디자인·CSS 변경 (동작 변화 없음) |
+| Content | 공고 데이터 추가·수정 (예: `Content: 10.21 공고 업데이트 (신규 4, 갱신 1, auto)`) |
+| Docs | CLAUDE.md·README·주석 |
+| Refactor | 동작 변화 없는 코드 정리 |
+| Chore | 설정·배포·도구 (`tools/`, `_config.yml`) |
+
+- CSS/JS 캐시: index.html 이 `style.css?v=YYYYMMDD`·`main.js?v=YYYYMMDD` 로 불러온다. 고치면 `?v=` 를 새 날짜로 올린다(같은 날 두 번째면 `YYYYMMDD02`). 데이터(JSON)는 main.js 가 10분 단위 쿼리로 캐시를 우회한다.
+- 방문자 집계: GoatCounter(https://lspace-next.goatcounter.com, Tech Radar 와 같은 계정 — 경로 `/BizRadar/` 로 구분).
+
+## 로컬 확인
+
+```
+python -m http.server 8000   # http://localhost:8000  (file:// 로 열면 JSON 로딩 실패)
+pip install olefile pypdf    # extract_text.py 의 hwp/pdf 추출용
+```
