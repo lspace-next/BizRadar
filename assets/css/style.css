@@ -190,13 +190,6 @@ button, input, select { font: inherit; color: inherit; }
   scroll-margin-top: 240px;
   overflow: hidden;
 }
-.notice::before { /* 유형 색 띠 */
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: var(--type);
-}
 .notice[data-type="rnd"] { --type: var(--t-rnd); }
 .notice[data-type="support"] { --type: var(--t-support); }
 .notice[data-type="bid"] { --type: var(--t-bid); }
@@ -208,7 +201,7 @@ button, input, select { font: inherit; color: inherit; }
   column-gap: 20px;
   row-gap: 6px;
   width: 100%;
-  padding: 16px 20px 16px 22px;
+  padding: 16px 20px;
   border: 0;
   background: transparent;
   text-align: left;
@@ -276,7 +269,6 @@ button, input, select { font: inherit; color: inherit; }
   padding: 9px 12px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--type) 8%, transparent);
-  border-left: 3px solid var(--type);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.55;
@@ -327,7 +319,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---------- expanded body ---------- */
 
-.notice-body { display: none; padding: 4px 20px 20px 22px; }
+.notice-body { display: none; padding: 4px 20px 20px; }
 .notice.is-open .notice-body { display: block; }
 .notice-body h3 {
   display: flex;
@@ -408,13 +400,13 @@ button, input, select { font: inherit; color: inherit; }
 @media (max-width: 640px) {
   .toolbar { position: static; }
   .notice { scroll-margin-top: 70px; }
-  .notice-head { grid-template-columns: 1fr; padding: 14px 14px 14px 16px; }
+  .notice-head { grid-template-columns: 1fr; padding: 14px; }
   .notice-head > .dday { grid-column: 1; grid-row: auto; order: -1; text-align: left; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0; }
   .dday strong { font-size: 16px; }
   .dday.soon strong { font-size: 15px; }
   .notice-head > .chevron { display: none; }
   .notice-title { font-size: 16px; }
-  .notice-body { padding: 4px 14px 16px 16px; }
+  .notice-body { padding: 4px 14px 16px; }
   .detail-grid { grid-template-columns: 1fr; gap: 14px; }
   .fit-row { grid-template-columns: 22px 1fr; }
   .fit-row > span:last-child { grid-column: 2; }
