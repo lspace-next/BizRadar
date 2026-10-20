@@ -12,6 +12,7 @@
   --accent: #2563eb;
   --accent-soft: #e8efff;
   --shadow: 0 0 0 1px rgba(0,0,0,.03), 0 1px 3px rgba(0,0,0,.05);
+  --shadow-hover: 0 0 0 1px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.07);
 
   /* notice types */
   --t-rnd: #7c3aed;
@@ -52,6 +53,7 @@
     --accent: #6ea8ff;
     --accent-soft: #111d33;
     --shadow: 0 0 0 1px rgba(255,255,255,.06);
+    --shadow-hover: 0 0 0 1px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.35);
 
     --t-rnd: #a78bfa;
     --t-support: #22d3ee;
@@ -198,7 +200,9 @@ button, input, select { font: inherit; color: inherit; }
   box-shadow: var(--shadow);
   scroll-margin-top: 240px;
   overflow: hidden;
+  transition: box-shadow .15s ease;
 }
+@media (hover: hover) { .notice:hover { box-shadow: var(--shadow-hover); } } /* 터치 기기에는 적용하지 않음 */
 .notice[data-type="rnd"] { --type: var(--t-rnd); }
 .notice[data-type="support"] { --type: var(--t-support); }
 .notice[data-type="bid"] { --type: var(--t-bid); }
