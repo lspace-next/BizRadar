@@ -16,6 +16,10 @@
     ["bizinfo", "기업마당", "정부 지원사업 통합공고", "https://www.bizinfo.go.kr/sii/siia/selectSIIA200View.do"],
     ["nipa", "NIPA", "정보통신산업진흥원 사업공고", "https://www.nipa.kr/home/2-2"],
     ["rims", "중소조선연구원", "사업공고 · 입찰공고", "https://www.rims.re.kr/bbs/board.php?bo_table=m0602"],
+    ["btp", "부산테크노파크", "사업공고", "https://www.btp.or.kr/kor/CMS/Board/Board.do?mCode=MN013"],
+    ["gntp", "경남테크노파크", "지원사업 신청", "https://www.gntp.or.kr/biz/apply"],
+    ["ccei_bs", "부산창조경제혁신센터", "공지사항 · 입찰공고", "https://ccei.creativekorea.or.kr/busan/custom/notice_list.do"],
+    ["ccei_gn", "경남창조경제혁신센터", "사업공고 · 입찰공고", "https://ccei.creativekorea.or.kr/gyeongnam/allim/allim_list.do?div_code=1"],
     ["g2b", "나라장터", "SW 용역 입찰공고", "https://www.g2b.go.kr"],
   ];
   const $ = (s, el = document) => el.querySelector(s);

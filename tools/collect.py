@@ -67,16 +67,16 @@ def region_of(title):
     return "", hit[0] if hit else ""
 
 
-def fetch(url, data=None, timeout=30, ua=UA):
+def fetch(url, data=None, timeout=30, ua=UA, headers=None):
     body = urllib.parse.urlencode(data).encode() if isinstance(data, dict) else data
-    req = urllib.request.Request(url, data=body, headers={"User-Agent": ua, "Accept-Language": "ko-KR,ko"})
+    req = urllib.request.Request(url, data=body, headers={"User-Agent": ua, "Accept-Language": "ko-KR,ko", **(headers or {})})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read().decode(r.headers.get_content_charset() or "utf-8", errors="replace")
     except urllib.error.HTTPError as e:
         # 일부 기관(중소조선연구원 등)은 전체 브라우저 UA 문자열을 막고 짧은 UA 는 통과시킨다
         if e.code == 403 and ua == UA:
-            return fetch(url, data, timeout, ua="Mozilla/5.0")
+            return fetch(url, data, timeout, ua="Mozilla/5.0", headers=headers)
         raise
 
 
@@ -248,6 +248,126 @@ def rims(since):
     return list({r["src_id"]: r for r in out}.values())
 
 
+def _bid_or_support(title):
+    return "bid" if re.search(r"입찰|용역", title) else "support"
+
+
+def btp(since):
+    """부산테크노파크 사업공고 (기업지원·용역 공고가 한 게시판. 부산 지역 사업)"""
+    out = []
+    for page in range(1, 6):
+        s = fetch(f"https://www.btp.or.kr/kor/CMS/Board/Board.do?robot=Y&mCode=MN013&page={page}")
+        body = s.split("<tbody", 1)[-1].split("</tbody>", 1)[0]
+        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", body, re.S)
+        stop = not rows
+        for row in rows:
+            a = re.search(r"<a href='\?mCode=MN013[^']*&mgr_seq=(\d+)&board_seq=(\d+)'>\s*<span class=\"titleHover\">(.*?)</span>", row, re.S)
+            d = re.search(r'<td class="date">([^<]*)', row)
+            if not a:
+                continue
+            posted = ymd(d[1]) if d else ""
+            if posted and posted < since:
+                stop = True
+                continue
+            period = text((re.search(r'<td class="period">(.*?)</td>', row, re.S) or [None, ""])[1])
+            dates = re.findall(r"\d{4}\.\d{2}\.\d{2}", period)
+            title = text(a[3])
+            out.append({
+                "src": "부산TP", "src_id": f"btp:{a[2]}", "type": _bid_or_support(title), "title": title,
+                "agency": "부산테크노파크", "posted": posted,
+                "start": ymd(dates[0]) if dates else "", "end": ymd(dates[1]) if len(dates) > 1 else "",
+                "url": f"https://www.btp.or.kr/kor/CMS/Board/Board.do?mCode=MN013&mode=view&mgr_seq={a[1]}&board_seq={a[2]}",
+                "extra": {"period": period},
+            })
+        if stop:
+            break
+    return out
+
+
+def gntp(since):
+    """경남테크노파크 지원사업신청 (목록은 POST /biz/apply2 JSON 요청 → HTML. 게시일이 없어 접수시작일로 거른다)"""
+    out = []
+    for page in range(1, 6):
+        s = fetch("https://www.gntp.or.kr/biz/apply2", data=json.dumps({"pageIndex": str(page)}).encode(),
+                  headers={"Content-Type": "application/json;charset=UTF-8"})
+        body = s.split('id="gridData"', 1)[-1].split("</tbody>", 1)[0]
+        rows = re.findall(r'<tr class="table-contents">(.*?)</tr>', body, re.S)
+        if not rows:
+            break
+        fresh = False
+        for row in rows:
+            a = re.search(r"/biz/applyInfo/(\d+)'\)\">(.*?)</a>", row, re.S)
+            tds = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+            if not a or len(tds) < 8:
+                continue
+            dept, start, end, status = text(tds[2]), text(tds[5]), text(tds[6]), text(tds[7])
+            if ymd(start) < since or status == "접수마감":
+                continue
+            fresh = True
+            title = text(a[2])
+            m_end = re.match(r"(\S+)\s+(\d{2}:\d{2})", end)
+            out.append({
+                "src": "경남TP", "src_id": f"gntp:{a[1]}", "type": _bid_or_support(title), "title": title,
+                "agency": f"경남테크노파크 {dept}".strip(), "posted": ymd(start), "start": ymd(start),
+                "end": ymd(end), "url": f"https://www.gntp.or.kr/biz/applyInfo/{a[1]}",
+                "extra": {"status": status, "end_time": m_end[2] if m_end else ""},
+            })
+        if not fresh:
+            break
+    return out
+
+
+def _ccei(center, label, boards, since):
+    """창조경제혁신센터 공통 플랫폼(ccei.creativekorea.or.kr) 게시판 JSON. boards = [(목록 json, 상세 경로, div_code, type)]"""
+    out = []
+    for list_path, view_path, div, kind in boards:
+        for page in range(1, 4):
+            form = {"pn": page, "kind": "my", "sPtime": "now", "pagePerContents": 8}
+            if div:
+                form["div_code"] = div
+            d = json.loads(fetch(f"https://ccei.creativekorea.or.kr/{center}/{list_path}", data=form))
+            rows = ((d.get("result") or {}).get("list")) or []
+            stop = not rows
+            for x in rows:
+                posted = ymd(x.get("REG_DATE", ""))
+                if posted and posted < since:
+                    stop = True
+                    continue
+                title = text(x.get("TITLE", ""))
+                if title.startswith("[마감]"):
+                    continue
+                # 사업공고 목록에 섞여 나오는 협의회 공지(TABLE_TITLE=notice)는 공지 상세로 연결
+                vp = "custom/notice_view.do" if x.get("TABLE_TITLE") == "notice" else view_path
+                url = f"https://ccei.creativekorea.or.kr/{center}/{vp}?no={x['SEQ']}" + (f"&div_code={div}" if div and vp == view_path else "")
+                out.append({
+                    "src": label, "src_id": f"{center_id(center)}:{x['SEQ']}", "type": kind, "title": title,
+                    "agency": label, "posted": posted, "start": "", "end": "", "url": url, "extra": {},
+                })
+            if stop:
+                break
+    return list({r["src_id"]: r for r in out}.values())
+
+
+def center_id(center):
+    return {"gyeongnam": "ccei-gn", "busan": "ccei-bs"}[center]
+
+
+def ccei_gn(since):
+    """경남창조경제혁신센터 사업공고·입찰공고"""
+    return _ccei("gyeongnam", "경남창조경제혁신센터", [
+        ("allim/allimList.json", "allim/allim_view.do", "1", "support"),
+        ("allim/allimList.json", "allim/allim_view.do", "2", "bid"),
+    ], since)
+
+
+def ccei_bs(since):
+    """부산창조경제혁신센터 공지사항(사업공고가 여기 올라온다)·입찰공고"""
+    return _ccei("busan", "부산창조경제혁신센터", [
+        ("custom/noticeList.json", "custom/notice_view.do", "", "support"),
+        ("allim/allimList.json", "allim/allim_view.do", "2", "bid"),
+    ], since)
+
+
 class Skipped(RuntimeError):
     """의도적으로 건너뛴 소스 (보류 중 — 오류 아님)"""
 
@@ -300,7 +420,8 @@ def g2b(since):
     return keep
 
 
-SOURCES = {"ntis": ntis, "iris": iris, "bizinfo": bizinfo, "nipa": nipa, "rims": rims, "g2b": g2b}
+SOURCES = {"ntis": ntis, "iris": iris, "bizinfo": bizinfo, "nipa": nipa, "rims": rims,
+           "btp": btp, "gntp": gntp, "ccei_bs": ccei_bs, "ccei_gn": ccei_gn, "g2b": g2b}
 
 
 # ---------------------------------------------------------------- 필터·중복
