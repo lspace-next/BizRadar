@@ -15,7 +15,7 @@ CLAUDE.md 의 규칙(선정 기준·데이터 규칙)을 따라 새 공고를 �
    - `pip install -q olefile pypdf` (없을 때만).
 
 1. **후보 수집**: `python tools/collect.py [--since 기준일]`
-   - 소스별 결과 줄에 `ERROR` 가 있으면 보고에 적는다(나머지 소스로 계속). `g2b` 는 `DATA_GO_KR_KEY` 가 없으면 건너뛰는 게 정상이다.
+   - 소스별 결과 줄에 `ERROR` 가 있으면 보고에 적는다(나머지 소스로 계속). 실패한 소스를 `--only <소스>` 로 다시 돌려 성공하면 수집 현황도 그 결과로 바뀐다. `g2b` 는 `DATA_GO_KR_KEY` 가 없으면 건너뛰는 게 정상이다.
    - `.cache/candidates.json` 의 `new` = 신규 후보, `known` = 이미 실린 공고(정정·연장 확인용).
 
 2. **선별** (제목·기관·기간만으로 1차)
@@ -36,8 +36,9 @@ CLAUDE.md 의 규칙(선정 기준·데이터 규칙)을 따라 새 공고를 �
 
 4. **정리**
    - 마감 후 60일 지난 공고를 `data/archive/<마감 연도>.json` 으로 옮긴다(파일이 없으면 `[]` 로 만든다).
-   - `data/meta.json`: `{"last_run": "<오늘>T<지금 HH:MM>+09:00", "new": <신규 수>, "updated": <갱신 수>}`.
-     신규·갱신이 0건이어도 last_run 은 갱신한다(다음 실행의 수집 기준).
+   - `python tools/write_meta.py --new <신규 수> --updated <갱신 수>` — `data/meta.json` 을 직접 쓰지 않는다.
+     last_run(지금 KST)과 소스별 수집 결과(`sources`, collect.py 가 남긴 `.cache/scan.json`)를 함께 쓴다. 사이트 상단 "최종 수집"·수집 현황이 이 값이다.
+     신규·갱신이 0건이어도 실행한다(다음 실행의 수집 기준이자, 수집이 매일 돌고 있다는 표시).
 
 5. **검증·커밋**
    - `python tools/check_notices.py` — FAIL 은 고치거나 그 항목을 뺀다. 링크 WARN(403·접속 불가)은 WebFetch 로 존재를 확인한다.

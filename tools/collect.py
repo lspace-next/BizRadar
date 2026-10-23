@@ -5,7 +5,7 @@
     python tools/collect.py --all               # 키워드 필터 없이 전부 (키워드 조정용)
     python tools/collect.py --only ntis,iris    # 일부 소스만
 
-결과: .cache/candidates.json (커밋하지 않음). 후보마다 src_id·제목·기관·기간·상세 URL·맞은 키워드·
+결과: .cache/candidates.json (커밋하지 않음), 소스별 수집 결과는 .cache/scan.json (write_meta.py 가 meta.json 에 옮긴다). 후보마다 src_id·제목·기관·기간·상세 URL·맞은 키워드·
 중복/정정 표시가 있다. 적합도 판정·요약은 사람(Claude)이 상세 페이지·공고문을 읽고 한다.
 나라장터는 환경 변수 DATA_GO_KR_KEY(공공데이터포털 인증키)가 있을 때만 수집한다.
 """
@@ -23,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / ".cache/candidates.json"
+SCAN = ROOT / ".cache/scan.json"  # 소스별 마지막 수집 결과. write_meta.py 가 meta.json sources 로 옮긴다
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 KST = dt.timezone(dt.timedelta(hours=9))
 
@@ -247,11 +248,15 @@ def rims(since):
     return list({r["src_id"]: r for r in out}.values())
 
 
+class Skipped(RuntimeError):
+    """의도적으로 건너뛴 소스 (보류 중 — 오류 아님)"""
+
+
 def g2b(since):
     """나라장터 용역 입찰공고 (공공데이터포털 조달청_나라장터 입찰공고정보서비스, 인증키 필요)"""
     key = os.environ.get("DATA_GO_KR_KEY")
     if not key:
-        raise RuntimeError("DATA_GO_KR_KEY 없음 — 건너뜀")
+        raise Skipped("DATA_GO_KR_KEY 없음 — 건너뜀")
     now = dt.datetime.now(KST)
     begin = dt.datetime.strptime(since, "%Y-%m-%d")
     out, page = [], 1
@@ -343,11 +348,14 @@ def main():
 
     known_ids, known_titles = load_known()
     report, cands, seen_titles = {}, [], {}
+    scan = json.loads(SCAN.read_text(encoding="utf-8")) if SCAN.exists() else {}
     for name in names:
+        at = dt.datetime.now(KST).isoformat(timespec="minutes")
         try:
             rows = SOURCES[name](since)
         except Exception as e:  # 소스 하나가 막혀도 나머지는 계속
             report[name] = f"ERROR {type(e).__name__}: {e}"
+            scan[name] = {"status": "skip" if isinstance(e, Skipped) else "error", "at": at, "error": f"{type(e).__name__}: {e}"[:200]}
             continue
         kept = other = 0
         for r in rows:
@@ -369,12 +377,14 @@ def main():
             cands.append(r)
             kept += 1
         report[name] = f"{len(rows)}건 중 후보 {kept}건" + (f" (타 지역 {other}건 제외)" if other else "")
+        scan[name] = {"status": "ok", "at": at, "total": len(rows), "kept": kept}
 
     new = [c for c in cands if not c["known"]]
     out = {"generated": dt.datetime.now(KST).isoformat(timespec="minutes"), "since": since,
            "report": report, "new": new, "known": [c for c in cands if c["known"]]}
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    SCAN.write_text(json.dumps(scan, ensure_ascii=False, indent=1), encoding="utf-8")  # --only 재시도는 그 소스만 덮어쓴다
 
     print(f"기준일 {since} · 결과 {args.out}")
     for k, v in report.items():

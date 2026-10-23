@@ -136,6 +136,32 @@ button, input, select { font: inherit; color: inherit; }
 .stat.is-urgent b { color: var(--s-urgent); }
 @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 
+/* 수집 현황 — 최종 수집 시각과 소스별 결과. 하루 넘게 수집이 없으면 is-stale */
+.updated.is-stale { color: var(--s-urgent); }
+.scan { margin: 4px 0 8px; font-size: var(--fs-sm); color: var(--text-sub); }
+.scan summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; cursor: pointer; list-style: none; }
+.scan summary::-webkit-details-marker { display: none; }
+.scan summary > i { width: 8px; height: 8px; border-radius: 50%; background: var(--s-open); flex: none; }
+.scan.is-stale summary > i { background: var(--s-urgent); }
+.scan.is-stale .scan-head { color: var(--s-urgent); }
+.scan-head b { font-weight: 600; color: inherit; }
+.scan-sum { color: var(--text-mute); }
+.scan-sum::after { content: " ▾"; }
+.scan details[open] .scan-sum::after { content: " ▴"; }
+.scan-list { list-style: none; margin: 0; padding: 12px 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 20px; background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow); }
+.scan-src { display: grid; grid-template-columns: 8px 1fr auto; column-gap: 8px; align-items: baseline; min-width: 0; }
+.scan-src > i { width: 8px; height: 8px; border-radius: 50%; background: var(--s-closed); align-self: center; }
+.scan-src.ok > i { background: var(--s-open); }
+.scan-src.error > i { background: var(--s-urgent); }
+.scan-src a { color: var(--text); }
+.scan-src a b { font-weight: 600; }
+.scan-desc { grid-column: 2 / -1; font-size: var(--fs-xs); color: var(--text-mute); }
+.scan-res { grid-column: 3; grid-row: 1; font-size: var(--fs-xs); color: var(--text-mute); font-family: var(--mono); white-space: nowrap; }
+.scan-src.error .scan-res { color: var(--s-urgent); }
+.scan .scan-note { margin: 8px 0 0; font-size: var(--fs-xs); color: var(--text-mute); }
+@media (max-width: 900px) { .scan-list { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .scan-list { grid-template-columns: 1fr; } }
+
 /* ---------- toolbar ---------- */
 
 .toolbar { position: sticky; top: 56px; z-index: 10; background: var(--bg); padding: 12px 0 10px; border-bottom: 1px solid var(--line); }

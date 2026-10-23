@@ -8,6 +8,16 @@
   const MARK = { ok: ["✓", "충족"], partial: ["△", "부분"], no: ["✗", "불충족"], check: ["?", "확인 필요"] };
   const SHORT = { "분야": "분야", "주관 자격": "주관", "지역": "지역", "부담·조건": "부담" };
   const URGENT_DAYS = 7;
+  const STALE_HOURS = 26; // 매일 07:00 수집 — 이보다 오래되면 자동 수집이 멈춘 것으로 본다
+  // 수집 소스 (collect.py SOURCES 와 같은 이름). 상태는 meta.json sources 에서 온다
+  const SOURCES = [
+    ["ntis", "NTIS", "국가R&D 통합공고", "https://www.ntis.go.kr/rndgate/eg/un/ra/mng.do"],
+    ["iris", "IRIS", "범부처통합연구지원시스템", "https://www.iris.go.kr/contents/retrieveBsnsAncmBtinSituList.do"],
+    ["bizinfo", "기업마당", "정부 지원사업 통합공고", "https://www.bizinfo.go.kr/sii/siia/selectSIIA200View.do"],
+    ["nipa", "NIPA", "정보통신산업진흥원 사업공고", "https://www.nipa.kr/home/2-2"],
+    ["rims", "중소조선연구원", "사업공고 · 입찰공고", "https://www.rims.re.kr/bbs/board.php?bo_table=m0602"],
+    ["g2b", "나라장터", "SW 용역 입찰공고", "https://www.g2b.go.kr"],
+  ];
   const $ = (s, el = document) => el.querySelector(s);
 
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -20,6 +30,7 @@
     return Math.round((Date.parse(b) - Date.parse(a)) / 86400e3);
   }
   const md = (d) => (d ? d.slice(5, 10).replace("-", ".") : "");
+  const wd = (d) => "일월화수목금토"[new Date(d.slice(0, 10) + "T00:00Z").getUTCDay()];
 
   // 마감 상태: closed / urgent(D-7 이내) / open / soon(접수 시작 전) / always(마감일 없음)
   // 마감 시각이 있으면 그 시각이 지나는 순간 마감, 날짜만 있으면 그날 자정이 지나야 마감.
@@ -288,9 +299,37 @@
     meta = m;
     newDate = (meta.last_run || "").slice(0, 10) || notices.reduce((a, n) => (n.added > a ? n.added : a), "");
     refreshStates();
-    if (meta.last_run) {
-      $("#updated").innerHTML = `${md(meta.last_run)} ${meta.last_run.slice(11, 16)}<span class="upd-label"> 업데이트</span>`;
-    }
+    renderScan();
+  }
+
+  // 최종 수집 시각(헤더)과 소스별 수집 현황
+  function renderScan() {
+    const run = meta.last_run || "";
+    const hours = run ? (Date.now() - Date.parse(run)) / 3600e3 : Infinity;
+    const stale = hours > STALE_HOURS;
+    const when = run ? `${md(run)}(${wd(run)}) ${run.slice(11, 16)}` : "기록 없음";
+    $("#updated").innerHTML = `<span class="upd-label">최종 수집 </span>${run ? `${md(run)} ${run.slice(11, 16)}` : "—"}`;
+    $("#updated").classList.toggle("is-stale", stale);
+
+    const src = meta.sources || {};
+    const rows = SOURCES.map(([id, name, desc, url]) => {
+      const s = src[id] || {};
+      const [cls, text] =
+        s.status === "ok" ? ["ok", s.total ? `${s.total}건 확인 · 후보 ${s.kept}` : "새 공고 없음"]
+        : s.status === "error" ? ["error", "접속 실패"]
+        : s.status === "skip" ? ["skip", "보류"]
+        : ["none", "기록 없음"];
+      return { cls, html: `<li class="scan-src ${cls}"><i></i><a href="${esc(url)}" target="_blank" rel="noopener"><b>${esc(name)}</b> ↗</a><span class="scan-desc">${esc(desc)}</span><span class="scan-res">${text}</span></li>` };
+    });
+    const cnt = (c) => rows.filter((r) => r.cls === c).length;
+    const parts = [`수집 사이트 ${SOURCES.length}곳`, cnt("ok") && `정상 ${cnt("ok")}`, cnt("error") && `실패 ${cnt("error")}`, cnt("skip") && `보류 ${cnt("skip")}`].filter(Boolean);
+    const head = stale
+      ? `<b>최종 수집 ${when}</b> — ${run ? `${Math.floor(hours / 24)}일째 새 수집 기록이 없습니다. 자동 수집이 멈췄을 수 있습니다.` : "수집 기록이 없습니다."}`
+      : `<b>최종 수집 ${when}</b> · 신규 ${meta.new || 0} · 갱신 ${meta.updated || 0}`;
+    $("#scan").className = "scan" + (stale ? " is-stale" : "");
+    $("#scan").innerHTML = `<details><summary><i></i><span class="scan-head">${head}</span><span class="scan-sum">${parts.join(" · ")}</span></summary>
+      <ul class="scan-list">${rows.map((r) => r.html).join("")}</ul>
+      <p class="scan-note">매일 07:00(KST) 위 사이트를 자동으로 확인합니다. 새 공고가 없어도 수집 시각은 갱신됩니다.</p></details>`;
   }
 
   // 상태를 다시 계산하고 바뀐 공고가 있으면 true

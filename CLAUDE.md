@@ -15,12 +15,13 @@ SI 회사 L.SPACE 가 수주·과제 기회를 놓치지 않도록 **국가R&D �
 ```
 index.html              공고 목록 (data/notices.json 렌더). 공고별 고정 링크는 index.html#n-<id>
 data/notices.json       공고 데이터 — 사이트의 단일 소스. added 최신순(새 공고는 배열 맨 앞)
-data/meta.json          last_run(마지막 실행 시각, KST) · new · updated(그 실행의 신규/갱신 건수)
+data/meta.json          last_run(마지막 수집 시각, KST) · new · updated(그 실행의 신규/갱신 건수) · sources(소스별 수집 결과 ok/error/skip) — tools/write_meta.py 가 쓴다
 data/archive/YYYY.json  마감 후 60일 지난 공고 (마감 연도별). 사이트에는 안 나오고 중복 판정에만 쓴다
 assets/css/style.css    단일 스타일시트 (라이트/다크 자동)
 assets/js/main.js       목록 렌더 · 유형 탭 · 필터 · 정렬 · D-day/상태 계산
 tools/collect.py        소스별 목록 수집 → 키워드 1차 필터 → 이미 실린 공고 제외 → .cache/candidates.json
 tools/extract_text.py   상세 페이지 본문·첨부 URL 추출, 공고문(hwp/hwpx/pdf/zip) 텍스트 추출
+tools/write_meta.py     data/meta.json 쓰기 (last_run + .cache/scan.json 의 소스별 결과)
 tools/check_notices.py  발행 전 검증 (스키마·날짜·중복·정렬·링크)
 .claude/sources.md      수집 소스·접근 방법·키워드·클라우드 루틴 허용 도메인
 .claude/commands/daily.md  매일 절차
@@ -28,6 +29,8 @@ _config.yml             Pages 배포 제외 목록 (CLAUDE.md·README·tools·.c
 ```
 
 - `.cache/` 는 작업용(후보·내려받은 공고문). 커밋하지 않는다.
+- 화면 상단 "최종 수집"·수집 현황은 meta.json 으로 그린다. last_run 이 26시간보다 오래되면 빨간색으로 "자동 수집이 멈췄을 수 있음"을 띄운다.
+  수집 소스 표시 이름·링크는 `main.js` 의 `SOURCES` — 소스를 바꾸면 collect.py `SOURCES`·sources.md 와 함께 고친다.
 - 상태(접수예정/접수중/임박/마감)는 저장하지 않는다. `main.js` 가 `start`·`deadline` 과 지금(KST)으로 계산한다.
   deadline 에 시각(`THH:MM`)이 있으면 그 시각이 지나는 순간 마감, 날짜만 있으면 그날 자정이 지나야 마감. 열어 둔 페이지도 1분마다 다시 계산한다 — 마감 시각을 알면 꼭 시각까지 쓴다.
 

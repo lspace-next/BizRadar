@@ -159,6 +159,11 @@ def main():
         for k in ("new", "updated"):
             if not isinstance(meta.get(k), int):
                 fails.append(f"meta.json {k} 는 정수")
+        for k, v in (meta.get("sources") or {}).items():
+            if v.get("status") not in ("ok", "error", "skip"):
+                fails.append(f"meta.json sources.{k}.status 는 ok·error·skip")
+            if v.get("status") == "error":
+                warns.append(f"수집 실패 소스 {k}: {v.get('error', '')}")
     except Exception as e:
         fails.append(f"data/meta.json 읽기 실패: {e}")
 
