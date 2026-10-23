@@ -20,7 +20,6 @@
     ["gntp", "경남테크노파크", "지원사업 신청", "https://www.gntp.or.kr/biz/apply"],
     ["ccei_bs", "부산창조경제혁신센터", "공지사항 · 입찰공고", "https://ccei.creativekorea.or.kr/busan/custom/notice_list.do"],
     ["ccei_gn", "경남창조경제혁신센터", "사업공고 · 입찰공고", "https://ccei.creativekorea.or.kr/gyeongnam/allim/allim_list.do?div_code=1"],
-    ["g2b", "나라장터", "SW 용역 입찰공고", "https://www.g2b.go.kr"],
   ];
   const $ = (s, el = document) => el.querySelector(s);
 

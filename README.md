@@ -2,7 +2,7 @@
 
 https://lspace-next.github.io/BizRadar/
 
-국가R&D 과제 · 정부 지원사업 · 나라장터 SW 입찰공고 중 프로그램 개발·AI·IT 관련 공고를 매일 모아
+국가R&D 과제 · 정부 지원사업 · SW 입찰공고(부산·경남 기관·중소조선연구원) 중 프로그램 개발·AI·IT 관련 공고를 매일 모아
 사업명·내용·규모·신청기한·핵심 조건을 정리하는 정적 사이트 (GitHub Pages).
 
 ## 매일 업데이트
@@ -28,7 +28,7 @@ python tools/extract_text.py "<첨부 URL>"      # 공고문(hwp·hwpx·pdf·zip
 python tools/check_notices.py                 # 발행 전 검증
 ```
 
-나라장터 입찰 수집은 **보류 중**이다. 다시 켜려면 공공데이터포털의 `조달청_나라장터 입찰공고정보서비스` 인증키를 루틴 환경 변수 `DATA_GO_KR_KEY` 로 넣고, 루틴 프롬프트의 '나라장터 보류' 문장을 지운다.
+나라장터는 수집하지 않는다. 기업마당은 클라우드에서 사이트 접속이 막혀 공공데이터포털 API(루틴 환경 변수 `DATA_GO_KR_KEY`)로 받는다.
 
 규칙은 [CLAUDE.md](CLAUDE.md), 소스는 [.claude/sources.md](.claude/sources.md), 절차는 [.claude/commands/daily.md](.claude/commands/daily.md).
 

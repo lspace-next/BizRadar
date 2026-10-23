@@ -14,9 +14,7 @@
 | `gntp` | support·bid | 경남테크노파크 지원사업신청 (경남) | POST `https://www.gntp.or.kr/biz/apply2` JSON `{"pageIndex":"<n>"}` → HTML(`#gridData`). 게시일이 없어 **접수시작일**로 거르고 접수마감 건은 뺀다. 마감 시각은 `extra.end_time` | `https://www.gntp.or.kr/biz/applyInfo/<id>` 본문 + 첨부(`/dextnj/streamDownload?fileAttachNo=`) |
 | `ccei_bs` | support·bid | 부산창조경제혁신센터 | POST `https://ccei.creativekorea.or.kr/busan/custom/noticeList.json`(공지사항 — 부산은 사업공고를 여기 올림)·`allim/allimList.json`(`div_code=2` 입찰공고), 폼 `pn=<n>&pagePerContents=8` → JSON `result.list` (SEQ·TITLE·REG_DATE). 협의회 공통 공지(채용 등)가 섞여 있다 | `custom/notice_view.do?no=<SEQ>` / `allim/allim_view.do?no=<SEQ>&div_code=2` |
 | `ccei_gn` | support·bid | 경남창조경제혁신센터 | POST `https://ccei.creativekorea.or.kr/gyeongnam/allim/allimList.json` `div_code=1`(사업공고)·`2`(입찰공고). 사업공고에 `TABLE_TITLE=notice` 인 협의회 공지가 섞이면 `custom/notice_view.do` 로 연결 | `allim/allim_view.do?no=<SEQ>&div_code=<d>` |
-| `g2b` | bid | 나라장터 용역 입찰공고 | 공공데이터포털 `조달청_나라장터 입찰공고정보서비스` `getBidPblancListInfoServc` (`inqryDiv=1`, `inqryBgnDt/EndDt=YYYYMMDDHHMM`, `type=json`). **환경 변수 `DATA_GO_KR_KEY` 필요** — 없으면 건너뜀 | 응답의 `bidNtceDtlUrl`(나라장터 상세). 제안요청서는 상세의 첨부 |
 
-키가 없을 때 나라장터 보완: WebSearch `site:g2b.go.kr 소프트웨어 개발 용역 입찰공고` 또는 조달청 보도자료. 입찰 건은 반드시 나라장터 상세에서 공고번호·마감·추정가격을 확인한다.
 
 ### 참고 (수동 확인용, collect.py 미포함)
 | 소스 | URL | 비고 |
@@ -57,4 +55,4 @@ files.pythonhosted.org
 ```
 
 환경 변수(루틴 환경 설정): `DATA_GO_KR_KEY` = 공공데이터포털 일반 인증키(Decoding 아닌 **Encoding** 키를 그대로).
-이 키로 **중소기업 지원사업 공고 조회 서비스**(기업마당 대체 — 필수)를 활용신청해 둔다. 나라장터 API 는 보류 중이라 `collect.py` 의 `G2B_ON = False` 로 꺼 두었다.
+이 키로 **중소기업 지원사업 공고 조회 서비스**(기업마당 대체 — 필수)를 활용신청해 둔다.

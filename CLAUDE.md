@@ -1,12 +1,12 @@
 # L.SPACE Biz Radar
 
-SI 회사 L.SPACE 가 수주·과제 기회를 놓치지 않도록 **국가R&D 과제 · 정부 지원사업 · 나라장터 SW 입찰공고** 중
+SI 회사 L.SPACE 가 수주·과제 기회를 놓치지 않도록 **국가R&D 과제 · 정부 지원사업 · SW 입찰공고(부산·경남 기관·중소조선연구원)** 중
 프로그램 개발·AI·IT 관련 공고만 매일 모아 사업명·내용·규모·신청기한·핵심 조건을 정리하는 정적 사이트(GitHub Pages).
 빌드 도구 없음. HTML/CSS/JS 와 JSON 데이터를 그대로 배포한다. 운영 방식은 L.SPACE Tech Radar(`lspace-next/WeeklyNews`)를 따른다.
 
 - **업데이트**: `/daily` (`.claude/commands/daily.md`). 매일(주말 포함) 07:00 KST 클라우드 루틴이 `/daily auto` 를 실행해 `main` 에 푸시한다.
   `tools/check_notices.py` 를 통과하지 못하면 푸시하지 않는다. 푸시에 성공하고 신규·갱신이 있으면 루틴이 Gmail 커넥터로 jihye.min@lspace.kr 에 결과 메일을 보낸다(지시문은 루틴 프롬프트).
-- **나라장터(g2b)**: 보류 중(`collect.py` `G2B_ON = False`). 수집 현황의 '보류'는 정상이다.
+- **나라장터**: 수집하지 않는다(제외, 2026-10-23).
 - **기업마당**: 클라우드에서는 사이트 접속이 막혀 공공데이터포털 API 로 받는다 — 루틴 환경 변수 `DATA_GO_KR_KEY` 필요(.claude/sources.md).
 - **SITE_URL**: `https://lspace-next.github.io/BizRadar`
 - **저장소**: https://github.com/lspace-next/BizRadar (main 브랜치 / root 를 Pages 로 배포)
@@ -63,7 +63,7 @@ _config.yml             Pages 배포 제외 목록 (CLAUDE.md·README·tools·.c
 |---|---|---|
 | `rnd` | 국가R&D | NTIS·IRIS 에 올라오는 부처 R&D 신규과제 공고 (기술수요조사는 제외) |
 | `support` | 지원사업 | 기업마당·NIPA·중소조선연구원·부산/경남TP·부산/경남 창조경제혁신센터 등 비R&D 지원사업 (바우처·실증·보급·용역 수행기관 모집 등) |
-| `bid` | SW입찰 | 나라장터 용역 입찰공고 중 SW 개발·구축·고도화·유지관리·ISP·데이터 구축, 중소조선연구원 입찰공고 |
+| `bid` | SW입찰 | 부산·경남 TP·창조경제혁신센터·중소조선연구원 입찰·용역 공고 중 SW 개발·구축·고도화·유지관리·ISP·데이터 구축 |
 
 ## 태그 (고정 — check_notices 가 검사)
 
@@ -134,7 +134,7 @@ _config.yml             Pages 배포 제외 목록 (CLAUDE.md·README·tools·.c
 }
 ```
 
-- **id**: `소스접두어-원번호` (`iris-024439`, `ntis-1279968`, `bizinfo-PBLN_000000000127316`, `nipa-16969`, `rims-m0602-104`, `btp-9582588`, `gntp-3853`, `ccei-bs-38953`, `ccei-gn-16366`, `g2b-R26BK00000001-000`). 한 번 정하면 바꾸지 않는다.
+- **id**: `소스접두어-원번호` (`iris-024439`, `ntis-1279968`, `bizinfo-PBLN_000000000127316`, `nipa-16969`, `rims-m0602-104`, `btp-9582588`, `gntp-3853`, `ccei-bs-38953`, `ccei-gn-16366`). 한 번 정하면 바꾸지 않는다.
 - **src_ids**: collect.py 의 `src_id` 형식(`iris:024439`). 같은 공고의 모든 소스 id 를 넣어야 다음 날 다시 후보로 안 뜬다.
 - **posted** 공고일, **start** 접수 시작일(접수 전이면 화면에 "접수 MM.DD~", 모르면 생략), **deadline** 접수 마감(시각을 알면 `THH:MM`, 상시·예산 소진 시까지면 `""`).
 - **budget**: 화면에 그대로 나오는 문구. 공고문 표현을 줄여 쓴다(총 사업비·과제당 지원액·기간). 입찰은 `추정가격 3.2억 원 (부가세 포함 여부)`. 모르면 `""` → 화면에 "공고문 확인".

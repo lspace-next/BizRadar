@@ -7,7 +7,7 @@
 
 결과: .cache/candidates.json (커밋하지 않음), 소스별 수집 결과는 .cache/scan.json (write_meta.py 가 meta.json 에 옮긴다). 후보마다 src_id·제목·기관·기간·상세 URL·맞은 키워드·
 중복/정정 표시가 있다. 적합도 판정·요약은 사람(Claude)이 상세 페이지·공고문을 읽고 한다.
-나라장터는 환경 변수 DATA_GO_KR_KEY(공공데이터포털 인증키)가 있을 때만 수집한다.
+기업마당은 사이트 접속이 막히면 환경 변수 DATA_GO_KR_KEY(공공데이터포털 인증키)로 API 를 쓴다.
 """
 import argparse
 import datetime as dt
@@ -412,65 +412,8 @@ def ccei_bs(since):
     ], since)
 
 
-G2B_ON = False  # 나라장터는 보류 중. 재개하면 True (같은 DATA_GO_KR_KEY 로 나라장터 API 활용신청도 해야 한다)
-
-
-class Skipped(RuntimeError):
-    """의도적으로 건너뛴 소스 (보류 중 — 오류 아님)"""
-
-
-def g2b(since):
-    """나라장터 용역 입찰공고 (공공데이터포털 조달청_나라장터 입찰공고정보서비스, 인증키 필요)"""
-    if not G2B_ON:
-        raise Skipped("보류 중 — 건너뜀")
-    key = os.environ.get("DATA_GO_KR_KEY")
-    if not key:
-        raise Skipped("DATA_GO_KR_KEY 없음 — 건너뜀")
-    now = dt.datetime.now(KST)
-    begin = dt.datetime.strptime(since, "%Y-%m-%d")
-    out, page = [], 1
-    while True:
-        q = urllib.parse.urlencode({
-            "serviceKey": key, "type": "json", "numOfRows": 100, "pageNo": page, "inqryDiv": 1,
-            "inqryBgnDt": begin.strftime("%Y%m%d0000"), "inqryEndDt": now.strftime("%Y%m%d%H%M"),
-        }, safe="%")
-        d = json.loads(fetch("https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServc?" + q))
-        body = d.get("response", {}).get("body", {})
-        items = body.get("items") or []
-        if isinstance(items, dict):  # 1건이면 dict 로 오는 경우
-            items = items.get("item", [])
-            items = items if isinstance(items, list) else [items]
-        for it in items:
-            no, ord_ = it.get("bidNtceNo", ""), it.get("bidNtceOrd", "")
-            price = it.get("presmptPrce") or it.get("asignBdgtAmt") or ""
-            out.append({
-                "src": "나라장터", "src_id": f"g2b:{no}-{ord_}", "type": "bid", "title": (it.get("bidNtceNm") or "").strip(),
-                "agency": it.get("dminsttNm") or it.get("ntceInsttNm") or "", "posted": ymd(it.get("bidNtceDt")),
-                "start": ymd(it.get("bidBeginDt")), "end": ymd(it.get("bidClseDt")),
-                "url": it.get("bidNtceDtlUrl") or f"https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo={no}&bidPbancOrd={ord_}",
-                "extra": {
-                    "price": price, "method": it.get("cntrctCnclsMthdNm", ""), "close": it.get("bidClseDt", ""),
-                    "ntce_org": it.get("ntceInsttNm", ""), "kind": it.get("srvceDivNm", ""),
-                },
-            })
-        total = int(body.get("totalCount") or 0)
-        if page * 100 >= total or not items:
-            break
-        page += 1
-    # 1억 미만 소액 용역은 뺀다 (가격 정보가 없으면 남김)
-    keep = []
-    for c in out:
-        try:
-            if c["extra"]["price"] and float(c["extra"]["price"]) < 100_000_000:
-                continue
-        except ValueError:
-            pass
-        keep.append(c)
-    return keep
-
-
 SOURCES = {"ntis": ntis, "iris": iris, "bizinfo": bizinfo, "nipa": nipa, "rims": rims,
-           "btp": btp, "gntp": gntp, "ccei_bs": ccei_bs, "ccei_gn": ccei_gn, "g2b": g2b}
+           "btp": btp, "gntp": gntp, "ccei_bs": ccei_bs, "ccei_gn": ccei_gn}
 
 
 # ---------------------------------------------------------------- 필터·중복
@@ -525,7 +468,7 @@ def main():
             rows = SOURCES[name](since)
         except Exception as e:  # 소스 하나가 막혀도 나머지는 계속
             report[name] = f"ERROR {type(e).__name__}: {e}"
-            scan[name] = {"status": "skip" if isinstance(e, Skipped) else "error", "at": at, "error": f"{type(e).__name__}: {e}"[:200]}
+            scan[name] = {"status": "error", "at": at, "error": f"{type(e).__name__}: {e}"[:200]}
             continue
         kept = other = 0
         for r in rows:
