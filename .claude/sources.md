@@ -7,7 +7,7 @@
 |---|---|---|---|---|
 | `ntis` | rnd | NTIS 국가R&D통합공고 | POST `https://www.ntis.go.kr/rndgate/eg/un/ra/mng.do` (`pageIndex`, `pageUnit=100`). 등록순, 마감 섞임 | `view.do?roRndUid=<id>` — **공고금액(억원)·접수마감시간**이 정형으로 있음. 본문은 "IRIS 에서 확인" 인 경우가 많다 |
 | `iris` | rnd | IRIS 범부처통합연구지원시스템 | POST `https://www.iris.go.kr/contents/retrieveBsnsAncmBtinSituList.do` (`ancmPrg=ancmIng`·`ancmPre`, `pageIndex`) → JSON. 접수예정은 페이지당 10초+ | `retrieveBsnsAncmView.do?ancmId=<id>` 본문 + 첨부(`/comm/file/fileDownload.do?atchDocId=&atchFileId=`, GET 으로 받아짐). **공고문 hwp/hwpx 에 과제목록·지원규모·자격** |
-| `bizinfo` | support | 기업마당 지원사업 | GET `https://www.bizinfo.go.kr/sii/siia/selectSIIA200View.do?rows=15&cpage=<n>&schEndAt=N` (15건 고정, 등록일 최신순) | `selectSIIA200Detail.do?pblancId=<id>` — 사업개요·신청방법 본문, 첨부 `/cmm/fms/fileDown.do?...`. R&D 공고도 섞여 있으니 NTIS/IRIS 와 중복 확인 |
+| `bizinfo` | support | 기업마당 지원사업 | GET `https://www.bizinfo.go.kr/sii/siia/selectSIIA200View.do?rows=15&cpage=<n>&schEndAt=N` (15건 고정, 등록일 최신순) | `selectSIIA200Detail.do?pblancId=<id>` — 사업개요·신청방법 본문, 첨부 `/cmm/fms/fileDown.do?...`. R&D 공고도 섞여 있으니 NTIS/IRIS 와 중복 확인. **클라우드 루틴에서는 bizinfo.go.kr 접속이 끊긴다**(Connection reset) → `DATA_GO_KR_KEY` 가 있으면 공공데이터포털 `중소벤처기업부_중소기업 지원사업 공고 조회 서비스`(`apis.data.go.kr/1421000/bizinfo/pblancBsnsService`, 활용신청 필요)로 자동 대체 |
 | `nipa` | support | NIPA 정보통신산업진흥원 사업공고 | GET `https://www.nipa.kr/home/2-2?curPage=<n>` | `https://www.nipa.kr/home/2-2/<id>` |
 | `rims` | support·bid | 중소조선연구원 (부산, 조선·해양 주력 분야) | GET `https://www.rims.re.kr/bbs/board.php?bo_table=m0602`(사업공고)·`m0605`(입찰공고). 그누보드, 날짜 `MM-DD`(올해)·`YY-MM-DD`. **키워드 필터 없이 전부 후보**. 전체 브라우저 UA 는 403 → 짧은 `Mozilla/5.0` 로 재시도(collect·extract 가 자동 처리) | `board.php?bo_table=m0602&wr_id=<id>` — 본문이 비고 첨부(`download.php`)만 있는 경우가 많다. 마감일은 제목 `(~26.10.08)` 또는 첨부 공고문 |
 | `btp` | support·bid | 부산테크노파크 사업공고 (부산) | GET `https://www.btp.or.kr/kor/CMS/Board/Board.do?robot=Y&mCode=MN013&page=<n>`. 표 행에 접수기간·등록일. 제목에 입찰·용역이 있으면 bid | `Board.do?mCode=MN013&mode=view&mgr_seq=<m>&board_seq=<id>` 본문 + 첨부 |
@@ -57,3 +57,4 @@ files.pythonhosted.org
 ```
 
 환경 변수(루틴 환경 설정): `DATA_GO_KR_KEY` = 공공데이터포털 일반 인증키(Decoding 아닌 **Encoding** 키를 그대로).
+이 키로 **중소기업 지원사업 공고 조회 서비스**(기업마당 대체 — 필수)를 활용신청해 둔다. 나라장터 API 는 보류 중이라 `collect.py` 의 `G2B_ON = False` 로 꺼 두었다.

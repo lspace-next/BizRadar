@@ -152,7 +152,51 @@ def iris(since):
 
 
 def bizinfo(since):
-    """기업마당 지원사업 공고 (중기부·지자체·전문기관 지원사업 통합)"""
+    """기업마당 지원사업 공고 (중기부·지자체·전문기관 지원사업 통합).
+    클라우드 루틴에서는 bizinfo.go.kr 접속이 끊기므로(해외 IP 차단으로 보임) 실패하면 공공데이터포털 API 로 받는다."""
+    try:
+        return bizinfo_site(since)
+    except Exception as e:
+        if not os.environ.get("DATA_GO_KR_KEY"):
+            raise RuntimeError(f"{type(e).__name__}: {e} (DATA_GO_KR_KEY 가 있으면 공공데이터포털 API 로 대신 받음)") from e
+        return bizinfo_api(since)
+
+
+def bizinfo_api(since):
+    """공공데이터포털 '중소벤처기업부_중소기업 지원사업 공고 조회 서비스' (기업마당 데이터, 활용신청 필요)"""
+    key = os.environ["DATA_GO_KR_KEY"]
+    out = []
+    for page in range(1, 11):
+        q = urllib.parse.urlencode({"serviceKey": key, "dataType": "json", "numOfRows": 100, "pageNo": page}, safe="%")
+        d = json.loads(fetch("https://apis.data.go.kr/1421000/bizinfo/pblancBsnsService?" + q))
+        body = d.get("response", d).get("body", {})
+        items = body.get("items") or []
+        if isinstance(items, dict):  # {"item": [...]} 또는 1건이면 dict
+            items = items.get("item", [])
+            items = items if isinstance(items, list) else [items]
+        fresh = False
+        for it in items:
+            posted = ymd(it.get("creatPnttm", ""))
+            if posted and posted < since:
+                continue
+            fresh = True
+            pid = it.get("pblancId", "")
+            dates = re.findall(r"\d{4}[.\-]?\d{2}[.\-]?\d{2}", it.get("reqstBeginEndDe", ""))
+            url = it.get("pblancUrl") or ""
+            out.append({
+                "src": "기업마당", "src_id": f"bizinfo:{pid}", "type": "support", "title": text(it.get("pblancNm", "")),
+                "agency": f"{it.get('jrsdInsttNm', '')} / {it.get('excInsttNm', '')}".strip(" /"), "posted": posted,
+                "start": ymd(dates[0]) if dates else "", "end": ymd(dates[1]) if len(dates) > 1 else "",
+                "url": url if url.startswith("http") else f"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId={pid}",
+                "extra": {"field": it.get("pldirSportRealmLclasCodeNm", ""), "period": it.get("reqstBeginEndDe", ""),
+                          "target": it.get("trgetNm", ""), "summary": text(it.get("bsnsSumryCn", ""))[:300], "via": "api"},
+            })
+        if not items or not fresh or page * 100 >= int(body.get("totalCount") or 0):
+            break
+    return out
+
+
+def bizinfo_site(since):
     out = []
     for page in range(1, 21):
         s = fetch(f"https://www.bizinfo.go.kr/sii/siia/selectSIIA200View.do?rows=15&cpage={page}&schEndAt=N")
@@ -368,12 +412,17 @@ def ccei_bs(since):
     ], since)
 
 
+G2B_ON = False  # 나라장터는 보류 중. 재개하면 True (같은 DATA_GO_KR_KEY 로 나라장터 API 활용신청도 해야 한다)
+
+
 class Skipped(RuntimeError):
     """의도적으로 건너뛴 소스 (보류 중 — 오류 아님)"""
 
 
 def g2b(since):
     """나라장터 용역 입찰공고 (공공데이터포털 조달청_나라장터 입찰공고정보서비스, 인증키 필요)"""
+    if not G2B_ON:
+        raise Skipped("보류 중 — 건너뜀")
     key = os.environ.get("DATA_GO_KR_KEY")
     if not key:
         raise Skipped("DATA_GO_KR_KEY 없음 — 건너뜀")
