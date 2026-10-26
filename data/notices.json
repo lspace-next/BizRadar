@@ -63,6 +63,7 @@
     "url": "https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024439",
     "src_ids": [
       "iris:024439",
+      "ntis:1280523",
       "bizinfo:PBLN_000000000127270"
     ],
     "posted": "2026-10-15",
